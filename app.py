@@ -546,19 +546,17 @@ def render_config():
 
     st.markdown('<div class="thr-card">', unsafe_allow_html=True)
 
-    # ── Sample target (full width) ────────────────────────────────────────────
-    st.markdown('<div class="thr-title">Survey Progress</div>', unsafe_allow_html=True)
-    sample_target = st.number_input(
-        "Designed sample size (leave 0 to skip progress tracking)",
-        value=0, min_value=0, step=50, key="sample_target",
-        help="Total number of households planned for this survey. Used to track completion % on the Survey Status tab.",
-    )
-    st.markdown("<hr style='margin:.4rem 0 .6rem;border-color:#f0f2f5'>", unsafe_allow_html=True)
-
     col_ind, col_thr = st.columns([2, 3], gap="large")
 
-    # ── Left: Indicators ──────────────────────────────────────────────────────
+    # ── Left: Sample target + Indicators ─────────────────────────────────────
     with col_ind:
+        st.markdown('<div class="thr-title">Survey Progress</div>', unsafe_allow_html=True)
+        sample_target = st.number_input(
+            "Designed sample size (leave 0 to skip progress tracking)",
+            value=0, min_value=0, step=50, key="sample_target",
+            help="Total number of households planned for this survey. Used to track completion % on the Survey Status tab.",
+        )
+        st.markdown("<hr style='margin:.4rem 0 .6rem;border-color:#f0f2f5'>", unsafe_allow_html=True)
         st.markdown('<div class="thr-title">Indicators to run</div>', unsafe_allow_html=True)
         enabled = []
         left, right = st.columns(2, gap="small")
