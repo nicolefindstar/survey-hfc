@@ -1149,7 +1149,230 @@ def tab_enumerator_behavior(stats: dict, working_df: pd.DataFrame, results: dict
         st.caption("Enumerator or date column not detected.")
 
 
-# ── Tab 3: Data Quality ───────────────────────────────────────────────────────
+# ── Tab 3: Indicator Breakdown ────────────────────────────────────────────────
+
+def tab_indicator_breakdown(working_df: pd.DataFrame):
+    ctx      = _ctx(working_df)
+    area_col = ctx["area"]
+    enu_col  = ctx["enu"]
+    date_col = ctx["date"]
+
+    # ── Helper: stacked % bar ─────────────────────────────────────────────────
+    def _stacked_pct_bar(df, group_col, value_col, cats, colors, height=320, top_n=None):
+        """Return a stacked-100% go.Figure grouped by group_col."""
+        grp = (df[[group_col, value_col]].dropna()
+               .groupby(group_col)[value_col]
+               .value_counts(normalize=True).mul(100).round(1)
+               .reset_index(name="pct"))
+        pivot = (grp.pivot(index=group_col, columns=value_col, values="pct")
+                 .fillna(0).reset_index())
+        if top_n:
+            counts = df[group_col].value_counts().head(top_n).index
+            pivot  = pivot[pivot[group_col].isin(counts)]
+        fig = go.Figure()
+        for cat, color in zip(cats, colors):
+            if cat not in pivot.columns:
+                pivot[cat] = 0.0
+            fig.add_trace(go.Bar(
+                name=cat,
+                x=pivot[group_col],
+                y=pivot[cat],
+                marker_color=color,
+                text=pivot[cat].map(lambda v: f"{v:.0f}%" if v >= 5 else ""),
+                textposition="inside",
+                hovertemplate=f"<b>%{{x}}</b><br>{cat}: %{{y:.1f}}%<extra></extra>",
+            ))
+        fig.update_layout(
+            **_chart_layout(height=height, barmode="stack"),
+            yaxis=dict(range=[0, 100], ticksuffix="%", gridcolor="#f0f2f5", linecolor="#e2e8f0"),
+            legend=dict(orientation="h", y=1.06, x=0),
+        )
+        return fig
+
+    # ── Helper: mean score trend line ────────────────────────────────────────
+    def _trend_line(df, date_col, score_col, color, label):
+        tmp = df[[date_col, score_col]].copy()
+        tmp["_d"] = pd.to_datetime(tmp[date_col], errors="coerce").dt.date
+        daily = tmp.groupby("_d")[score_col].mean().round(2).reset_index()
+        daily.columns = ["date", "mean"]
+        fig = go.Figure(go.Scatter(
+            x=daily["date"], y=daily["mean"],
+            mode="lines+markers",
+            line=dict(color=color, width=2),
+            marker=dict(size=5),
+            name=label,
+            hovertemplate="<b>%{x}</b><br>Mean: %{y:.1f}<extra></extra>",
+        ))
+        fig.update_layout(**_chart_layout(height=220))
+        return fig
+
+    # ── Helper: mean score horizontal bar ────────────────────────────────────
+    def _mean_hbar(df, group_col, score_col, color, top_n=25):
+        tmp = (df[[group_col, score_col]].dropna()
+               .groupby(group_col)[score_col].mean().round(2)
+               .sort_values(ascending=True).tail(top_n).reset_index())
+        tmp.columns = ["group", "mean"]
+        fig = go.Figure(go.Bar(
+            x=tmp["mean"], y=tmp["group"],
+            orientation="h",
+            marker_color=color,
+            hovertemplate="<b>%{y}</b><br>Mean: %{x:.1f}<extra></extra>",
+        ))
+        fig.update_layout(**_chart_layout(
+            height=max(200, len(tmp) * 26 + 60),
+            xaxis_title="Mean score", yaxis_title=None,
+        ))
+        return fig
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # A — FOOD CONSUMPTION SCORE
+    # ══════════════════════════════════════════════════════════════════════════
+    fcs_ok = "FCG" in working_df.columns and "FCS" in working_df.columns
+
+    with st.expander("🍽️  Food Consumption Score (FCS)", expanded=True):
+        if not fcs_ok:
+            st.caption("No data — FCS columns not detected in this dataset.")
+        else:
+            fcs_cats   = ["Poor", "Borderline", "Acceptable"]
+            fcs_colors = [_C["poor"], _C["border"], _C["accept"]]
+
+            # -- By area --
+            if area_col and area_col in working_df.columns:
+                _section("FCS Category Distribution by Area")
+                st.caption("% of households in each FCS category per area")
+                st.plotly_chart(
+                    _stacked_pct_bar(working_df, area_col, "FCG", fcs_cats, fcs_colors, height=300),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+            else:
+                st.caption("No area column detected — skipping geographic breakdown.")
+
+            st.divider()
+
+            # -- By enumerator --
+            if enu_col and enu_col in working_df.columns:
+                _section("FCS Category Distribution by Enumerator  (top 20)")
+                st.caption("Enumerators whose distributions deviate from the overall pattern may warrant follow-up")
+                st.plotly_chart(
+                    _stacked_pct_bar(working_df, enu_col, "FCG", fcs_cats, fcs_colors, height=340, top_n=20),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+            else:
+                st.caption("No enumerator column detected — skipping enumerator breakdown.")
+
+            st.divider()
+
+            # -- Trend over time --
+            if date_col and date_col in working_df.columns:
+                _section("Mean FCS Over Time")
+                st.plotly_chart(
+                    _trend_line(working_df, date_col, "FCS", _C["primary"], "Mean FCS"),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+            else:
+                st.caption("No date column detected — skipping time trend.")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # B — rCSI
+    # ══════════════════════════════════════════════════════════════════════════
+    rcsi_ok = "rCSI" in working_df.columns
+
+    with st.expander("🔄  Reduced Coping Strategies Index (rCSI)", expanded=True):
+        if not rcsi_ok:
+            st.caption("No data — rCSI columns not detected in this dataset.")
+        else:
+            # Compute severity category on the fly
+            df_r = working_df.copy()
+            df_r["rCSI_Cat"] = pd.cut(
+                pd.to_numeric(df_r["rCSI"], errors="coerce"),
+                bins=[-1, 3, 18, 9999],
+                labels=["Low  (≤ 3)", "Medium  (4–18)", "High  (≥ 19)"],
+            ).astype(str).replace("nan", pd.NA)
+
+            rcsi_cats   = ["Low  (≤ 3)", "Medium  (4–18)", "High  (≥ 19)"]
+            rcsi_colors = [_C["ok_fg"], _C["med_fg"], _C["crit_fg"]]
+
+            # -- By area --
+            if area_col and area_col in working_df.columns:
+                _section("rCSI Severity Distribution by Area")
+                st.caption("% of households in each rCSI severity level per area")
+                st.plotly_chart(
+                    _stacked_pct_bar(df_r, area_col, "rCSI_Cat", rcsi_cats, rcsi_colors, height=300),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+            else:
+                st.caption("No area column detected — skipping geographic breakdown.")
+
+            st.divider()
+
+            # -- By enumerator --
+            if enu_col and enu_col in working_df.columns:
+                _section("rCSI Severity Distribution by Enumerator  (top 20)")
+                st.plotly_chart(
+                    _stacked_pct_bar(df_r, enu_col, "rCSI_Cat", rcsi_cats, rcsi_colors, height=340, top_n=20),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+            else:
+                st.caption("No enumerator column detected — skipping enumerator breakdown.")
+
+            st.divider()
+
+            # -- Trend over time --
+            if date_col and date_col in working_df.columns:
+                _section("Mean rCSI Over Time")
+                st.plotly_chart(
+                    _trend_line(working_df, date_col, "rCSI", _C["teal"], "Mean rCSI"),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+            else:
+                st.caption("No date column detected — skipping time trend.")
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # C — HDDS
+    # ══════════════════════════════════════════════════════════════════════════
+    hdds_ok = "HDDS" in working_df.columns
+
+    with st.expander("🥗  Household Dietary Diversity Score (HDDS)", expanded=True):
+        if not hdds_ok:
+            st.caption("No data — HDDS columns not detected in this dataset.")
+        else:
+            ca, cb = st.columns(2)
+
+            # -- By area --
+            with ca:
+                if area_col and area_col in working_df.columns:
+                    _section("Mean HDDS by Area")
+                    st.plotly_chart(
+                        _mean_hbar(working_df, area_col, "HDDS", _C["primary"]),
+                        use_container_width=True, config=_PLOTLY_CFG,
+                    )
+                else:
+                    _section("Mean HDDS by Area")
+                    st.caption("No area column detected.")
+
+            # -- By enumerator --
+            with cb:
+                if enu_col and enu_col in working_df.columns:
+                    _section("Mean HDDS by Enumerator  (top 25)")
+                    st.plotly_chart(
+                        _mean_hbar(working_df, enu_col, "HDDS", _C["teal"]),
+                        use_container_width=True, config=_PLOTLY_CFG,
+                    )
+                else:
+                    _section("Mean HDDS by Enumerator")
+                    st.caption("No enumerator column detected.")
+
+            # -- Trend over time --
+            if date_col and date_col in working_df.columns:
+                st.divider()
+                _section("Mean HDDS Over Time")
+                st.plotly_chart(
+                    _trend_line(working_df, date_col, "HDDS", _C["purple"], "Mean HDDS"),
+                    use_container_width=True, config=_PLOTLY_CFG,
+                )
+
+
+# ── Tab 4: Data Quality ───────────────────────────────────────────────────────
 
 def tab_data_quality(stats: dict, working_df: pd.DataFrame, results: dict):
     ctx      = _ctx(working_df)
@@ -1824,9 +2047,10 @@ def main():
     stats = compute_stats(results, working_df)
 
     st.divider()
-    t1, t2, t3, t4, t5, t6 = st.tabs([
+    t1, t2, t3, t4, t5, t6, t7 = st.tabs([
         "📋  Survey Status",
         "👤  Enumerator Behavior",
+        "📊  Indicator Breakdown",
         "🔍  Data Quality",
         "📑  Flag Details",
         "⬇️  Downloads",
@@ -1834,10 +2058,11 @@ def main():
     ])
     with t1: tab_survey_status(stats, working_df, stored_target)
     with t2: tab_enumerator_behavior(stats, working_df, results)
-    with t3: tab_data_quality(stats, working_df, results)
-    with t4: tab_details(results)
-    with t5: tab_downloads(results, raw_cached, working_df, fstem, sname)
-    with t6: tab_methodology()
+    with t3: tab_indicator_breakdown(working_df)
+    with t4: tab_data_quality(stats, working_df, results)
+    with t5: tab_details(results)
+    with t6: tab_downloads(results, raw_cached, working_df, fstem, sname)
+    with t7: tab_methodology()
 
 
 if __name__ == "__main__":
