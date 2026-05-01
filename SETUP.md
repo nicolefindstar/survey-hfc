@@ -207,6 +207,20 @@ Press `Ctrl + C` in Terminal.
 
 ---
 
+## Dashboard Tabs Reference
+
+| Tab | What it shows |
+|---|---|
+| **Survey Status** | Cumulative and daily submission counts, progress vs. target, pace projections, priority action items, enumerator and area completion tables |
+| **Enumerator Behavior** | Flag rates per enumerator, indicator means comparison table with outlier highlighting, daily submission heatmap |
+| **Indicator Breakdown** | FCS category breakdown (Poor / Borderline / Acceptable) and rCSI severity (Low / Medium / High) as stacked % bar charts by area and by enumerator; mean HDDS by area and enumerator; mean FCS, rCSI and HDDS trend lines over the collection period |
+| **Data Quality** | Duplicate HHID detection, flag rates by indicator, FCS and rCSI distributions, FEWS NET illogicality matrix, missing data heatmap |
+| **Flag Details** | Full flagged record tables per indicator with plain-language narrative explanations |
+| **Downloads** | Excel error log, per-enumerator feedback Excel, HTML manager report |
+| **Methodology** | Reference documentation for all ten indicator modules |
+
+---
+
 ## Column Naming Reference
 
 Column names must match the VAM convention exactly (case-sensitive). The tool auto-detects context columns and matches indicator columns by name.

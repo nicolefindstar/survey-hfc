@@ -32,10 +32,17 @@ Flags implausible or inconsistent values within each module:
 | **Non-food Expenditure (6-month)** | Item below minimum meaningful price; item above maximum plausible value |
 | **Timing** | Interview shorter than minimum duration; interview longer than maximum duration; start hour outside expected working hours |
 
-### 3. Cross-Indicator Checks
+### 3. Indicator Distribution Charts
+Visualises how key indicator scores are distributed across geographic areas and enumerators — complementing the flag-based checks with a population-level view:
+- FCS category breakdown (Poor / Borderline / Acceptable) as stacked % bar by area and by enumerator
+- rCSI severity breakdown (Low / Medium / High) by area and by enumerator
+- Mean HDDS by area and by enumerator
+- Mean FCS, rCSI, and HDDS trend lines over the data collection period
+
+### 4. Cross-Indicator Checks
 Detects logical contradictions across indicators using FEWS NET illogicality pairs — combinations that cannot coexist under standard food security frameworks (e.g. Poor FCS with zero coping strategies, Acceptable FCS with extreme coping).
 
-### 4. Enumerator Monitoring
+### 5. Enumerator Monitoring
 Surfaces patterns that suggest coaching, rushing, or fabrication:
 - Per-enumerator flag rates vs. overall average
 - Enumerator means on key indicators (FCS, rCSI, HDDS, HH size, duration) flagged when they deviate more than 1.5 standard deviations from the dataset mean
@@ -50,6 +57,7 @@ Surfaces patterns that suggest coaching, rushing, or fabrication:
 |---|---|
 | **Survey Status tab** | Cumulative and daily submission counts, progress vs. target, estimated days to completion, priority action items, enumerator and area completion tables |
 | **Enumerator Behavior tab** | Flag rates per enumerator, indicator means comparison table, daily submission heatmap |
+| **Indicator Breakdown tab** | FCS / rCSI / HDDS stacked % bar charts by area and enumerator; mean score trend lines over the collection period |
 | **Data Quality tab** | Duplicate HHID detection, flag rates by indicator, FCS and rCSI distributions, FEWS NET illogicality matrix, missing data heatmap by indicator × enumerator |
 | **Flag Details tab** | Full flagged record tables per indicator with plain-language narrative explanations |
 | **HTML report** | Self-contained manager report — print to PDF via browser, no internet required |
