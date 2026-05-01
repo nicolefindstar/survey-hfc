@@ -1,0 +1,17 @@
+# Timing — configurable thresholds (all durations in minutes)
+
+# Duration considered technically invalid (end before start / near-zero)
+invalid_duration_min: 0
+
+# Duration flagged as suspiciously short
+short_duration_min: 10
+
+# Duration flagged as suspiciously long
+long_duration_min: 120
+
+# UTC offset of survey country (hours, can be fractional e.g. 5.5)
+utc_offset_hours: 0
+
+# Hour-of-day boundaries for abnormal interview periods (24h format)
+abnormal_early_morning_end: 7    # before 07:00 is flagged
+abnormal_evening_start: 19       # after 19:00 is flagged

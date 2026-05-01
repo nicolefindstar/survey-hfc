@@ -1,0 +1,10 @@
+# Base columns included in every indicator output sheet.
+# Adjust to match your survey's actual column names.
+base_columns:
+  - _uuid
+  - EnuName
+  - EnuSupervisorName
+  - ADMIN1Name
+  - ADMIN2Name
+  - ADMIN3Name
+  - today

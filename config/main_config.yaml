@@ -1,0 +1,55 @@
+# ============================================================
+# WFP Survey High-Frequency Checks — Main Configuration
+# ============================================================
+# Set enabled: false to skip an indicator entirely.
+# All standard column names follow WFP VAM data dictionary.
+
+base_columns:
+  - _uuid
+  - EnuName
+  - EnuSupervisorName
+  - ADMIN1Name
+  - ADMIN2Name
+  - ADMIN3Name
+  - today
+
+indicators:
+  FCS:
+    enabled: true
+    description: "Food Consumption Score (8 food groups, 0-7 days)"
+
+  rCSI:
+    enabled: true
+    description: "Reduced Coping Strategies Index (5 strategies, 0-7 days)"
+
+  HDDS:
+    enabled: true
+    description: "Household Dietary Diversity Score (10 food groups, yes/no)"
+
+  Demo:
+    enabled: true
+    description: "Demographics — household composition by age/gender"
+
+  Housing:
+    enabled: true
+    description: "Housing status and tenure type"
+
+  LCS:
+    enabled: true
+    description: "Livelihood Coping Strategies"
+
+  HHExpF:
+    enabled: true
+    description: "Food expenditure (7-day recall)"
+
+  HHExpNF1M:
+    enabled: true
+    description: "Non-food expenditure (1-month recall)"
+
+  HHExpNF6M:
+    enabled: true
+    description: "Non-food expenditure (6-month recall)"
+
+  Timing:
+    enabled: true
+    description: "Interview timing and duration checks"

@@ -1,0 +1,5 @@
+# Interview timing
+columns:
+  start: { type: datetime, required: true }
+  end:   { type: datetime, required: true }
+  today: { type: date,     required: false }

@@ -1,0 +1,14 @@
+# FCS — configurable thresholds (adjust per country context)
+
+# Flag when FCS falls below this value (data quality, not food security categorisation)
+low_fcs_threshold: 10
+
+# Flag when FCS exceeds this value (suspiciously high — possible rounding/interview issue)
+high_fcs_threshold: 112   # theoretical max = 2*7 + 3*7 + 4*7 + 4*7 + 1*7 + 1*7 + 0.5*7 + 0.5*7 = 112
+
+# Flag when staple consumption < this many days (unexpected for most contexts)
+low_staple_threshold: 1
+
+# Override FCG cut-offs here if using 28/42 thresholds for sugar/oil-rich diets
+# fcg_poor_threshold: 28
+# fcg_borderline_threshold: 42

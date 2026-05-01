@@ -1,0 +1,54 @@
+# Household Expenditure modules
+# All monetary values must be >= 0
+
+# ── 7-day food expenditure ────────────────────────────────────────────────────
+food_7d:
+  recall_period: 7
+  categories:
+    - HHExpFCer      # Cereals & grains
+    - HHExpFTub      # Tubers & roots
+    - HHExpFPulse    # Pulses & nuts
+    - HHExpFVeg      # Vegetables
+    - HHExpFFruit    # Fruit
+    - HHExpFMeat     # Meat & poultry
+    - HHExpFFish     # Fish & seafood
+    - HHExpFDairy    # Dairy
+    - HHExpFEgg      # Eggs
+    - HHExpFOil      # Oil & fats
+    - HHExpFSugar    # Sugar & sweets
+    - HHExpFCond     # Condiments & spices
+    - HHExpFBev      # Non-alcoholic beverages
+    - HHExpFOther    # Other food
+  sources:           # suffix appended to each category
+    - _Purch_MN_7D   # purchased
+    - _GiftAid_MN_7D # gifts / aid in kind
+    - _OwnProd_MN_7D # own production
+
+# ── 1-month non-food expenditure ──────────────────────────────────────────────
+nonfood_1m:
+  recall_period: 30
+  categories:
+    - HHExpNFHyg     # Hygiene & personal care
+    - HHExpNFTrans   # Transport
+    - HHExpNFFuel    # Fuel / energy
+    - HHExpNFWat     # Water
+    - HHExpNFComm    # Communication
+    - HHExpNFMed     # Medical / health
+    - HHExpNFEduc    # Education
+    - HHExpNFOther   # Other non-food (1M)
+  sources:
+    - _Purch_MN_1M
+    - _GiftAid_MN_1M
+
+# ── 6-month non-food expenditure ──────────────────────────────────────────────
+nonfood_6m:
+  recall_period: 180
+  categories:
+    - HHExpNFCloth   # Clothing & footwear
+    - HHExpNFRent    # Rent / housing
+    - HHExpNFDurable # Durable goods
+    - HHExpNFCerem   # Ceremonies / social events
+    - HHExpNFDebt    # Debt repayment
+  sources:
+    - _Purch_MN_6M
+    - _GiftAid_MN_6M

@@ -1,0 +1,29 @@
+# LCS — Livelihood Coping Strategies
+# Encoding: 10=Applied, 20=Not applied (not needed), 30=Exhausted, 9999=Not applicable
+columns:
+  # Stress strategies
+  LcsStressMore:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  LcsStressLessExp: { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  LcsStressBorrow:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  LcsStressSavings: { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  # Crisis strategies
+  LcsCrisisLiquid:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  LcsCrisisProd:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  LcsCrisisHealth:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  # Emergency strategies
+  LcsEmergBegged:   { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  LcsEmergMigrate:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
+
+# Optional child-specific strategies (flag if children = 0)
+child_strategies:
+  - LcsEmergChildMarry   # early marriage
+  - LcsEmergChildWork    # child labour / school dropout
+
+applied_code:     10
+not_needed_code:  20
+exhausted_code:   30
+not_applicable_code: 9999
+
+stress_cols:    [LcsStressMore, LcsStressLessExp, LcsStressBorrow, LcsStressSavings]
+crisis_cols:    [LcsCrisisLiquid, LcsCrisisProd, LcsCrisisHealth]
+emergency_cols: [LcsEmergBegged, LcsEmergMigrate]

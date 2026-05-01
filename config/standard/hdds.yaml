@@ -1,0 +1,30 @@
+# HDDS — Household Dietary Diversity Score (10 food groups, binary)
+# Values: 1 = consumed, 0 = not consumed
+columns:
+  HDDSStapCer:  { type: float, min: 0, max: 1, required: true }   # Cereals/roots/tubers
+  HDDSStapRoot: { type: float, min: 0, max: 1, required: false }  # Optional separate root column
+  HDDSVeg:      { type: float, min: 0, max: 1, required: true }
+  HDDSFruit:    { type: float, min: 0, max: 1, required: true }
+  HDDSPrMeat:   { type: float, min: 0, max: 1, required: true }
+  HDDSPrEgg:    { type: float, min: 0, max: 1, required: true }
+  HDDSPrFish:   { type: float, min: 0, max: 1, required: true }
+  HDDSPulse:    { type: float, min: 0, max: 1, required: true }
+  HDDSDairy:    { type: float, min: 0, max: 1, required: true }
+  HDDSFat:      { type: float, min: 0, max: 1, required: true }
+  HDDSSugar:    { type: float, min: 0, max: 1, required: true }
+  HDDSCond:     { type: float, min: 0, max: 1, required: false }  # Condiments (not scored)
+
+# Columns counted toward the 10-group score (excludes HDDSCond and duplicates)
+scored_columns:
+  - HDDSStapCer
+  - HDDSVeg
+  - HDDSFruit
+  - HDDSPrMeat
+  - HDDSPrEgg
+  - HDDSPrFish
+  - HDDSPulse
+  - HDDSDairy
+  - HDDSFat
+  - HDDSSugar
+
+low_hdds_threshold: 3

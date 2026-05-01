@@ -1,0 +1,15 @@
+# rCSI — reduced Coping Strategies Index (0–7 days per strategy)
+columns:
+  rCSILessQlty:  { type: float, min: 0, max: 7, required: true }
+  rCSIBorrow:    { type: float, min: 0, max: 7, required: true }
+  rCSIMealSize:  { type: float, min: 0, max: 7, required: true }
+  rCSIMealAdult: { type: float, min: 0, max: 7, required: true }
+  rCSIMealNb:    { type: float, min: 0, max: 7, required: true }
+
+# WFP standard weights
+weights:
+  rCSILessQlty:  1
+  rCSIBorrow:    2
+  rCSIMealSize:  1
+  rCSIMealAdult: 3
+  rCSIMealNb:    1

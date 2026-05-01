@@ -1,0 +1,16 @@
+# Expenditure — configurable thresholds (local currency units)
+
+# Minimum meaningful price in local currency — the smallest plausible non-zero
+# amount for a single expenditure item (e.g. price of a loaf of bread).
+# Any item that is > 0 but < this value is flagged as implausibly small.
+# Set to 0 to disable this check.
+min_item_price: 0
+
+# Any single expenditure item above this value is flagged as suspicious
+max_single_item_food_7d:    1000000
+max_single_item_nonfood_1m: 1000000
+max_single_item_nonfood_6m: 5000000
+
+# Flag households where ALL food expenditure sources = 0
+# (unlikely unless fully subsistence / aid-dependent — review contextually)
+flag_zero_total_food: true

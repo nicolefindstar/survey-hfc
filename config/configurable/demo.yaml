@@ -1,0 +1,7 @@
+# Demographics — configurable thresholds
+
+# Flag households with total size above this value
+high_hhsize_threshold: 30
+
+# Tolerance for sum mismatch: |sum(age-gender groups) - HHSize| > tolerance
+hhsize_sum_tolerance: 1

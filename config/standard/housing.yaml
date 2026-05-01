@@ -1,0 +1,17 @@
+# Housing status and tenure
+# Choices follow WFP standard coding
+columns:
+  HHStatus:
+    type: float
+    required: true
+    choices: [1, 2, 3, 4, 5, 6]
+    # 1=Resident, 2=Temp absent, 3=IDP, 4=Refugee, 5=Returnee, 6=Other displaced
+
+  HHTenureType:
+    type: float
+    required: false
+    choices: [1, 2, 3, 4, 5]
+    # 1=Own, 2=Rent, 3=Provided free, 4=Squatting, 5=Other
+
+displaced_statuses: [3, 4, 5, 6]   # HHStatus values indicating displacement
+ownership_code: 1                   # HHTenureType value for 'owns property'

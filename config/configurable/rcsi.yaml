@@ -1,0 +1,10 @@
+# rCSI — configurable thresholds
+
+# Flag when rCSI > threshold despite Acceptable FCG (inconsistency)
+high_rcsi_with_acceptable_fcg: 18
+
+# Flag when rCSI = 0 despite Poor FCG
+zero_rcsi_with_poor_fcg: true
+
+# Flag when all 5 strategy values are identical (possible data entry shortcut)
+flag_identical: true

@@ -1,0 +1,22 @@
+# Demographics — household composition (counts per age/gender group)
+columns:
+  HHSize:         { type: float, min: 1,  max: 99,  required: true }
+  HHSize01M:      { type: float, min: 0,  max: 30,  required: true }
+  HHSize24M:      { type: float, min: 0,  max: 30,  required: true }
+  HHSize511M:     { type: float, min: 0,  max: 30,  required: true }
+  HHSize1217M:    { type: float, min: 0,  max: 30,  required: true }
+  HHSize1859M:    { type: float, min: 0,  max: 30,  required: true }
+  HHSize60AboveM: { type: float, min: 0,  max: 30,  required: true }
+  HHSize01F:      { type: float, min: 0,  max: 30,  required: true }
+  HHSize24F:      { type: float, min: 0,  max: 30,  required: true }
+  HHSize511F:     { type: float, min: 0,  max: 30,  required: true }
+  HHSize1217F:    { type: float, min: 0,  max: 30,  required: true }
+  HHSize1859F:    { type: float, min: 0,  max: 30,  required: true }
+  HHSize60AboveF: { type: float, min: 0,  max: 30,  required: true }
+  HHPregLactNb:   { type: float, min: 0,  max: 20,  required: false }
+
+male_cols:   [HHSize01M, HHSize24M, HHSize511M, HHSize1217M, HHSize1859M, HHSize60AboveM]
+female_cols: [HHSize01F, HHSize24F, HHSize511F, HHSize1217F, HHSize1859F, HHSize60AboveF]
+adult_cols:  [HHSize1859M, HHSize60AboveM, HHSize1859F, HHSize60AboveF]
+child_cols:  [HHSize01M, HHSize24M, HHSize511M, HHSize1217M, HHSize01F, HHSize24F, HHSize511F, HHSize1217F]
+females_1259_cols: [HHSize1217F, HHSize1859F]
