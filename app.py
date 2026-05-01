@@ -1182,11 +1182,10 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                 textposition="inside",
                 hovertemplate=f"<b>%{{x}}</b><br>{cat}: %{{y:.1f}}%<extra></extra>",
             ))
-        fig.update_layout(
-            **_chart_layout(height=height, barmode="stack"),
-            yaxis=dict(range=[0, 100], ticksuffix="%", gridcolor="#f0f2f5", linecolor="#e2e8f0"),
-            legend=dict(orientation="h", y=1.06, x=0),
-        )
+        layout = _chart_layout(height=height, barmode="stack")
+        layout["yaxis"].update(range=[0, 100], ticksuffix="%")
+        layout["legend"] = dict(orientation="h", y=1.06, x=0)
+        fig.update_layout(**layout)
         return fig
 
     # ── Helper: mean score trend line ────────────────────────────────────────
