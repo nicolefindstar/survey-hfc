@@ -1158,7 +1158,7 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
     date_col = ctx["date"]
 
     # ── Helper: stacked % bar ─────────────────────────────────────────────────
-    def _stacked_pct_bar(df, group_col, value_col, cats, colors, height=320, top_n=None):
+    def _stacked_pct_bar(df, group_col, value_col, cats, colors, height=280, top_n=None):
         """Return a stacked-100% go.Figure grouped by group_col."""
         grp = (df[[group_col, value_col]].dropna()
                .groupby(group_col)[value_col]
@@ -1182,9 +1182,16 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                 textposition="inside",
                 hovertemplate=f"<b>%{{x}}</b><br>{cat}: %{{y:.1f}}%<extra></extra>",
             ))
-        layout = _chart_layout(height=height, barmode="stack")
+        layout = _chart_layout(height=height, barmode="stack",
+                               bargap=0.45,          # narrower bars
+                               margin=dict(l=8, r=8, t=8, b=52))
         layout["yaxis"].update(range=[0, 100], ticksuffix="%")
-        layout["legend"] = dict(orientation="h", y=1.06, x=0)
+        # Legend below the chart — avoids overlap with bars
+        layout["legend"] = dict(
+            orientation="h", x=0.5, y=-0.18,
+            xanchor="center", yanchor="top",
+            font=dict(size=10),
+        )
         fig.update_layout(**layout)
         return fig
 
@@ -1232,37 +1239,36 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
         if not fcs_ok:
             st.caption("No data — FCS columns not detected in this dataset.")
         else:
+            # WFP standard FCS colors
             fcs_cats   = ["Poor", "Borderline", "Acceptable"]
-            fcs_colors = [_C["poor"], _C["border"], _C["accept"]]
+            fcs_colors = ["#D70000", "#E67536", "#ECE1B1"]
 
-            # -- By area --
-            if area_col and area_col in working_df.columns:
-                _section("FCS Category Distribution by Area")
-                st.caption("% of households in each FCS category per area")
-                st.plotly_chart(
-                    _stacked_pct_bar(working_df, area_col, "FCG", fcs_cats, fcs_colors, height=300),
-                    use_container_width=True, config=_PLOTLY_CFG,
-                )
-            else:
-                st.caption("No area column detected — skipping geographic breakdown.")
+            ca, cb = st.columns(2)
+            with ca:
+                if area_col and area_col in working_df.columns:
+                    _section("By Area")
+                    st.plotly_chart(
+                        _stacked_pct_bar(working_df, area_col, "FCG", fcs_cats, fcs_colors),
+                        use_container_width=True, config=_PLOTLY_CFG,
+                    )
+                else:
+                    _section("By Area")
+                    st.caption("No area column detected.")
 
-            st.divider()
-
-            # -- By enumerator --
-            if enu_col and enu_col in working_df.columns:
-                _section("FCS Category Distribution by Enumerator  (top 20)")
-                st.caption("Enumerators whose distributions deviate from the overall pattern may warrant follow-up")
-                st.plotly_chart(
-                    _stacked_pct_bar(working_df, enu_col, "FCG", fcs_cats, fcs_colors, height=340, top_n=20),
-                    use_container_width=True, config=_PLOTLY_CFG,
-                )
-            else:
-                st.caption("No enumerator column detected — skipping enumerator breakdown.")
-
-            st.divider()
+            with cb:
+                if enu_col and enu_col in working_df.columns:
+                    _section("By Enumerator  (top 20)")
+                    st.plotly_chart(
+                        _stacked_pct_bar(working_df, enu_col, "FCG", fcs_cats, fcs_colors, top_n=20),
+                        use_container_width=True, config=_PLOTLY_CFG,
+                    )
+                else:
+                    _section("By Enumerator")
+                    st.caption("No enumerator column detected.")
 
             # -- Trend over time --
             if date_col and date_col in working_df.columns:
+                st.divider()
                 _section("Mean FCS Over Time")
                 st.plotly_chart(
                     _trend_line(working_df, date_col, "FCS", _C["primary"], "Mean FCS"),
@@ -1288,36 +1294,36 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                 labels=["Low  (≤ 3)", "Medium  (4–18)", "High  (≥ 19)"],
             ).astype(str).replace("nan", pd.NA)
 
+            # Mirror WFP FCS palette: low=acceptable cream, medium=borderline orange, high=poor red
             rcsi_cats   = ["Low  (≤ 3)", "Medium  (4–18)", "High  (≥ 19)"]
-            rcsi_colors = [_C["ok_fg"], _C["med_fg"], _C["crit_fg"]]
+            rcsi_colors = ["#ECE1B1", "#E67536", "#D70000"]
 
-            # -- By area --
-            if area_col and area_col in working_df.columns:
-                _section("rCSI Severity Distribution by Area")
-                st.caption("% of households in each rCSI severity level per area")
-                st.plotly_chart(
-                    _stacked_pct_bar(df_r, area_col, "rCSI_Cat", rcsi_cats, rcsi_colors, height=300),
-                    use_container_width=True, config=_PLOTLY_CFG,
-                )
-            else:
-                st.caption("No area column detected — skipping geographic breakdown.")
+            ca, cb = st.columns(2)
+            with ca:
+                if area_col and area_col in working_df.columns:
+                    _section("By Area")
+                    st.plotly_chart(
+                        _stacked_pct_bar(df_r, area_col, "rCSI_Cat", rcsi_cats, rcsi_colors),
+                        use_container_width=True, config=_PLOTLY_CFG,
+                    )
+                else:
+                    _section("By Area")
+                    st.caption("No area column detected.")
 
-            st.divider()
-
-            # -- By enumerator --
-            if enu_col and enu_col in working_df.columns:
-                _section("rCSI Severity Distribution by Enumerator  (top 20)")
-                st.plotly_chart(
-                    _stacked_pct_bar(df_r, enu_col, "rCSI_Cat", rcsi_cats, rcsi_colors, height=340, top_n=20),
-                    use_container_width=True, config=_PLOTLY_CFG,
-                )
-            else:
-                st.caption("No enumerator column detected — skipping enumerator breakdown.")
-
-            st.divider()
+            with cb:
+                if enu_col and enu_col in working_df.columns:
+                    _section("By Enumerator  (top 20)")
+                    st.plotly_chart(
+                        _stacked_pct_bar(df_r, enu_col, "rCSI_Cat", rcsi_cats, rcsi_colors, top_n=20),
+                        use_container_width=True, config=_PLOTLY_CFG,
+                    )
+                else:
+                    _section("By Enumerator")
+                    st.caption("No enumerator column detected.")
 
             # -- Trend over time --
             if date_col and date_col in working_df.columns:
+                st.divider()
                 _section("Mean rCSI Over Time")
                 st.plotly_chart(
                     _trend_line(working_df, date_col, "rCSI", _C["teal"], "Mean rCSI"),
