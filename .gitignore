@@ -28,6 +28,9 @@ hfc_run.log
 Thumbs.db
 desktop.ini
 
+# Claude Code
+.claude/
+
 # IDEs
 .vscode/
 .idea/
