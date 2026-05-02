@@ -1513,15 +1513,15 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                 ))
 
             layout = _chart_layout(height=bar_height, barmode="stack",
-                                   margin=dict(l=248, r=70, t=8, b=72))
+                                   margin=dict(l=300, r=80, t=44, b=48))
             layout["xaxis"].update(
                 ticksuffix="%", range=[0, 114],
-                title=dict(text="% of households", standoff=36),
+                title=dict(text="% of households", standoff=8),
             )
-            layout["yaxis"].update(autorange="reversed")
+            layout["yaxis"].update(autorange="reversed", ticklabelposition="outside")
             layout["legend"] = dict(
-                orientation="h", x=0.5, y=-0.09,
-                xanchor="center", yanchor="top", font=dict(size=10),
+                orientation="h", x=0.5, y=1.06,
+                xanchor="center", yanchor="bottom", font=dict(size=10),
                 tracegroupgap=0,
             )
             layout["shapes"]      = tier_shapes
