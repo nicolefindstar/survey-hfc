@@ -283,14 +283,35 @@ rCSI = sum of weighted values (max 56). Crisis threshold: **≥19**.
 
 Binary columns — 0 (not consumed) or 1 (consumed in the past 24 hours). The 12 food groups are defined in `config/standard/hdds.yaml`.
 
+| Column | Description |
+|---|---|
+| `HDDSStapCer` | Cereals / grains (rice, bread, sorghum, millet, maize) |
+| `HDDSStapRoot` | Roots and tubers — optional separate column (cassava, yam, potato) |
+| `HDDSPulse` | Pulses, legumes, nuts and seeds |
+| `HDDSDairy` | Dairy (milk, yogurt, cheese) |
+| `HDDSPrMeat` | Meat, poultry and offal |
+| `HDDSPrFish` | Fish and shellfish |
+| `HDDSPrEggs` | Eggs (any type) |
+| `HDDSVeg` | Vegetables and leaves |
+| `HDDSFruit` | Fruits |
+| `HDDSFat` | Oils, fats and butter |
+| `HDDSSugar` | Sugar and sweets |
+| `HDDSCond` | Condiments and spices — recorded but **not** counted toward the score |
+
 ### Livelihood Coping Strategies (LCS)
+
+Response codes follow the WFP standard choice list (WFP-0000134094):
 
 | Value | Meaning |
 |---|---|
-| `10` | Applied |
-| `20` | Not needed |
-| `30` | Exhausted — no longer an option |
-| `9999` | Not applicable |
+| `10` | No — did not need to apply this strategy |
+| `20` | No — already used / exhausted this strategy within the past 12 months |
+| `30` | Yes — applied this strategy |
+| `9999` | Not applicable (household has no access to this strategy) |
+
+> **Note on severity:** Code `20` ("already exhausted") is considered **more severe** than `30` ("applied"), because the household has permanently depleted that option and can no longer use it.
+
+> **Invalid N/A strategies:** For begging (`LcsEmergBegged`), migration (`LcsEmergMigrate`), child marriage (`LcsEmergChildMarry`), and child labour (`LcsEmergChildWork`), the response `9999` is **not valid** per WFP guidance (WFP-0000161492, p.21). These strategies should always be answered as `30` (applied) or `10` (did not need to).
 
 Stress, crisis, and emergency strategy column lists are configured in `config/standard/lcs.yaml`.
 

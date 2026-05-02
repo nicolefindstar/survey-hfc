@@ -1,29 +1,42 @@
-# LCS — Livelihood Coping Strategies
-# Encoding: 10=Applied, 20=Not applied (not needed), 30=Exhausted, 9999=Not applicable
+# LCS — Livelihood Coping Strategies — Food Security (LCS-FS)
+# Source: WFP standard LCS-FS questionnaire (WFP-0000134094)
+#
+# Encoding (WFP standard choice list "LcsCl"):
+#   10   = No, because we did not need to
+#   20   = No, because we already sold those assets / engaged in this activity within the last 12 months
+#   30   = Yes (applied)
+#   9999 = Not applicable (household has no access to this strategy)
+#
+# Note: 20 ("already exhausted") is considered MORE severe than 30 ("applied") because
+# the household has permanently depleted that option and can no longer use it.
+#
+# For emergency strategies (begging, migration, child labour), N/A is NOT a valid response
+# per WFP guidance (p.21, p.38). These should be recoded as "Not needed" (10).
+
 columns:
-  # Stress strategies
-  LcsStressMore:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  LcsStressLessExp: { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  LcsStressBorrow:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  LcsStressSavings: { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  # Crisis strategies
-  LcsCrisisLiquid:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  LcsCrisisProd:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  LcsCrisisHealth:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  # Emergency strategies
-  LcsEmergBegged:   { type: float, required: true,  choices: [10, 20, 30, 9999] }
-  LcsEmergMigrate:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  # Stress strategies — reversible; asset drawdown
+  Lcs_stress_DomAsset:  { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_stress_EatOut:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_stress_BorrowCash: { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_stress_Saving:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  # Crisis strategies — harder to reverse; productive asset loss
+  Lcs_crisis_ProdAssets: { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_crisis_OutSchool: { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_crisis_Health:    { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  # Emergency strategies — largely irreversible; last resort
+  Lcs_em_Begged:        { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_em_Migration:     { type: float, required: true,  choices: [10, 20, 30, 9999] }
+  Lcs_em_ChildWork:     { type: float, required: true,  choices: [10, 20, 30, 9999] }
 
-# Optional child-specific strategies (flag if children = 0)
+# Child-specific strategies — flag if no children present in household
 child_strategies:
-  - LcsEmergChildMarry   # early marriage
-  - LcsEmergChildWork    # child labour / school dropout
+  - Lcs_em_ChildWork    # children (under 15) working for income / school dropout
 
-applied_code:     10
-not_needed_code:  20
-exhausted_code:   30
-not_applicable_code: 9999
+applied_code:        30   # "Yes" — household is actively using this strategy
+not_needed_code:     10   # "No, because we did not need to"
+exhausted_code:      20   # "No, because we already used/sold this option in the past 12 months"
+not_applicable_code: 9999 # Household has no access to this strategy
 
-stress_cols:    [LcsStressMore, LcsStressLessExp, LcsStressBorrow, LcsStressSavings]
-crisis_cols:    [LcsCrisisLiquid, LcsCrisisProd, LcsCrisisHealth]
-emergency_cols: [LcsEmergBegged, LcsEmergMigrate]
+stress_cols:    [Lcs_stress_DomAsset, Lcs_stress_EatOut, Lcs_stress_BorrowCash, Lcs_stress_Saving]
+crisis_cols:    [Lcs_crisis_ProdAssets, Lcs_crisis_OutSchool, Lcs_crisis_Health]
+emergency_cols: [Lcs_em_Begged, Lcs_em_Migration, Lcs_em_ChildWork]

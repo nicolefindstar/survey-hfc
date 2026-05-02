@@ -214,29 +214,28 @@ INDICATOR_METHODOLOGY = {
     },
     "HDDS": {
         "full_name": "Household Dietary Diversity Score (HDDS)",
-        "source": "WFP VAM / FANTA — vamresources.manuals.wfp.org",
-        "recall": "24 hours",
-        "formula": "HDDS = sum of 12 binary food-group flags (0 or 1 each) — no weighting",
-        "range": "0–12",
-        "thresholds": "Severely food insecure 0–3 | Moderately food insecure 4–5 | Food secure 6–12",
+        "source": "WFP standard questionnaire WFP-0000136453 / FANTA",
+        "recall": "24 hours (yesterday)",
+        "formula": "HDDS = sum of 10 scored binary food-group flags (0 or 1 each) — no weighting. HDDSCond (condiments) is recorded but not counted.",
+        "range": "0–10 (scored groups); 0–12 if HDDSStapRoot and HDDSCond are counted separately",
+        "thresholds": "Severely food insecure 0–3 | Moderately food insecure 4–5 | Food secure 6–10",
         "groups": [
-            ("HDDSStapCer",  "Cereals",             "Binary", "Maize, rice, bread, sorghum, millet"),
-            ("HDDSStapRoot", "Roots & Tubers",       "Binary", "Cassava, sweet potato, yam, potato"),
-            ("HDDSPulse",    "Pulses / Legumes",     "Binary", "Beans, lentils, peas, cowpeas, soy"),
-            ("HDDSDairy",    "Dairy",                "Binary", "Milk, yogurt, cheese"),
-            ("HDDSPrMeat",   "Meat / Poultry",       "Binary", "Beef, goat, chicken, organ meats"),
-            ("HDDSPrEggs",   "Eggs",                 "Binary", "Eggs (any type)"),
-            ("HDDSPrFish",   "Fish / Seafood",       "Binary", "Fresh or canned fish, shellfish"),
-            ("HDDSVeg",      "Vegetables",           "Binary", "All vegetables, dark leafy greens"),
-            ("HDDSFruit",    "Fruits",               "Binary", "Fresh or dried fruits"),
-            ("HDDSFat",      "Oil / Fat",            "Binary", "Vegetable oil, butter, lard"),
-            ("HDDSSugar",    "Sugar / Honey",        "Binary", "Sugar, honey, sweets, jam"),
-            ("HDDSCond",     "Misc / Condiments",    "Binary", "Salt, spices, tea, coffee"),
+            ("HDDSStapCer",  "Cereals / Grains",     "Scored", "Rice, bread, sorghum, millet, maize, pasta"),
+            ("HDDSStapRoot", "Roots & Tubers",        "Optional", "Cassava, sweet potato, yam, potato, taro — optional separate column"),
+            ("HDDSPulse",    "Pulses / Legumes",      "Scored", "Beans, lentils, peas, cowpeas, groundnuts, soy"),
+            ("HDDSDairy",    "Dairy",                 "Scored", "Milk, yogurt, cheese"),
+            ("HDDSPrMeat",   "Meat / Poultry",        "Scored", "Beef, goat, chicken, organ meats"),
+            ("HDDSPrFish",   "Fish / Shellfish",      "Scored", "Fresh or canned fish, shellfish"),
+            ("HDDSPrEggs",   "Eggs",                  "Scored", "Eggs (any type)"),
+            ("HDDSVeg",      "Vegetables & Leaves",   "Scored", "All vegetables incl. dark leafy greens"),
+            ("HDDSFruit",    "Fruits",                "Scored", "Fresh or dried fruits"),
+            ("HDDSFat",      "Oil / Fat / Butter",    "Scored", "Vegetable oil, butter, palm oil, margarine"),
+            ("HDDSSugar",    "Sugar / Sweets",        "Scored", "Sugar, honey, jam, candy, biscuits, sugary drinks"),
+            ("HDDSCond",     "Condiments (not scored)","—",     "Salt, spices, tea, coffee, tomato paste — not counted toward score"),
         ],
         "quality_flags": {
-            "Identical": "All 12 binary food group values are identical (all 0 or all 1)",
-            "LowHDDS":   "HDDS ≤2 — extremely limited diet; only 1–2 food groups consumed in 24h",
-            "HighHDDS":  "HDDS ≥10 — 10+ distinct food groups in a single day; plausible only in food-secure contexts",
+            "Low":       "HDDS < configured threshold (default 3) — extremely limited diet; very few food groups in 24h",
+            "AllGroups": "HDDS equals maximum scored groups — all food groups consumed in 24h; verify plausibility with enumerator",
         },
     },
     "Demo": {
@@ -261,27 +260,42 @@ INDICATOR_METHODOLOGY = {
     },
     "LCS": {
         "full_name": "Livelihood Coping Strategies — Food Security (LCS-FS)",
-        "source": "WFP VAM — vamresources.manuals.wfp.org",
-        "recall": "30 days (active); 12 months (exhausted)",
-        "formula": "Hierarchical: max severity reached → 1=No coping | 2=Stress | 3=Crisis | 4=Emergency",
-        "range": "4 severity categories",
-        "thresholds": "Stress: reversible asset drawdown | Crisis: productive asset loss, school withdrawal | Emergency: land sale, begging, illegal acts",
+        "source": "WFP standard questionnaire WFP-0000134094",
+        "recall": "Active strategies: 30 days | Exhausted/depleted strategies: past 12 months",
+        "formula": (
+            "Response codes (WFP choice list 'LcsCl'): "
+            "10 = No, we did not need to  |  "
+            "20 = No, already used / sold within past 12M (exhausted)  |  "
+            "30 = Yes (applied)  |  "
+            "9999 = Not applicable (no access to this strategy)\n"
+            "Severity tier: Stress → Crisis → Emergency"
+        ),
+        "range": "3 severity tiers (Stress / Crisis / Emergency); 4 response options per strategy",
+        "thresholds": (
+            "Stress: reversible asset drawdown (savings, household goods, borrowing)  |  "
+            "Crisis: productive asset loss, health/education spending cuts  |  "
+            "Emergency: land sale, begging, child labour, informal migration"
+        ),
         "groups": [
-            ("Lcs_stress_DomAsset",  "Sold household assets (radio, furniture, jewellery)", "Stress",    "Reduces resilience to future shocks"),
-            ("Lcs_stress_BorrowCash","Borrowed money due to food shortage",                  "Stress",    "Increases debt burden"),
-            ("Lcs_stress_Saving",    "Spent savings due to food shortage",                   "Stress",    "Depletes safety net"),
-            ("Lcs_stress_EatOut",    "Sent members to eat elsewhere",                        "Stress",    "Loss of household cohesion"),
-            ("Lcs_crisis_ProdAssets","Sold productive assets or transport",                  "Crisis",    "Reduces future income capacity — difficult to reverse"),
-            ("Lcs_crisis_Health",    "Reduced health / medicine expenditure",                "Crisis",    "Human capital degradation"),
-            ("Lcs_crisis_OutSchool", "Withdrew children from school",                        "Crisis",    "Long-term human capital loss"),
-            ("Lcs_em_ResAsset",      "Sold or mortgaged house / land",                       "Emergency", "Loss of residence — extremely difficult to reverse"),
-            ("Lcs_em_Begged",        "Begged or scavenged for food",                         "Emergency", "Dignity and safety risk"),
-            ("Lcs_em_IllegalAct",    "Engaged in illegal / high-risk income activities",     "Emergency", "Life-threatening; deepest crisis indicator"),
+            # 4 Stress strategies
+            ("Lcs_stress_DomAsset",  "Sold household assets/goods (radio, furniture, jewellery)",        "Stress",    "Reversible — reduces household resilience to future shocks"),
+            ("Lcs_stress_Saving",    "Spent savings due to lack of food",                                "Stress",    "Depletes household safety net"),
+            ("Lcs_stress_BorrowCash","Borrowed money to cover food needs",                               "Stress",    "Increases debt burden; external dependency"),
+            ("Lcs_stress_EatOut",    "Sent household members to eat elsewhere",                           "Stress",    "Loss of household cohesion; social cost"),
+            # 3 Crisis strategies
+            ("Lcs_crisis_ProdAssets","Sold productive assets or means of transport (bicycle, car…)",     "Crisis",    "Reduces future income — very difficult to reverse"),
+            ("Lcs_crisis_Health",    "Reduced expenses on health (including essential medicines)",        "Crisis",    "Human capital degradation; long-term welfare impact"),
+            ("Lcs_crisis_OutSchool", "Withdrew children from school (compulsory education)",             "Crisis",    "Long-term human capital loss; intergenerational impact"),
+            # 3 Emergency strategies
+            ("Lcs_em_Begged",        "Begged and/or scavenged for food or money",                        "Emergency", "N/A not valid — must be 'Yes' or 'Did not need to' (WFP guidance)"),
+            ("Lcs_em_Migration",     "Household member migrated informally/irregularly",                  "Emergency", "N/A not valid — must be 'Yes' or 'Did not need to' (WFP guidance)"),
+            ("Lcs_em_ChildWork",     "Children (under 15) worked to contribute to household income",     "Emergency", "N/A not valid — must be 'Yes' or 'Did not need to' (WFP guidance)"),
         ],
         "quality_flags": {
-            "Identical":             "All strategy responses are identical across the module",
-            "ChildStratNoChildren":  "Child-related strategy (school withdrawal) answered Yes/No when no school-age children in household",
-            "AllNotApplicable":      "Nearly all strategies coded N/A — possible enumerator shortcut; verify context",
+            "ChildStratNoChildren": "Child-specific strategy (marriage, labour) marked 'Applied' but no children in household",
+            "AllNA_PoorFood":       "All LCS strategies marked N/A despite Poor food security — logically inconsistent",
+            "NonSequential":        "Emergency coping strategy used without any stress or crisis strategy — possible interviewer skip logic issue",
+            "ManyNA":               "3+ strategies marked 'Not Applicable' — may indicate systematic enumerator skipping; flag for supervisor review",
         },
     },
     "HHExpF": {
@@ -1379,46 +1393,46 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
     # D — LCS
     # ══════════════════════════════════════════════════════════════════════════
 
-    # Standard WFP LCS columns → human-readable label (VAM codebook / HFC guidance)
+    # Standard WFP LCS columns → human-readable label (WFP-0000134094 codebook)
     # Ordered Stress → Crisis → Emergency (increasing severity)
     _LCS_LABELS = {
-        # Stress — asset-light, reversible
-        "LcsStressMore":      "Sold more animals / crops than usual",
-        "LcsStressLessExp":   "Reduced non-food expenditure",
-        "LcsStressBorrow":    "Borrowed money, food, or relied on help",
-        "LcsStressSavings":   "Spent savings",
-        # Crisis — asset-depleting, harder to reverse
-        "LcsCrisisLiquid":    "Sold household assets (radio, bicycle…)",
-        "LcsCrisisProd":      "Sold productive assets or transport",
-        "LcsCrisisHealth":    "Reduced health / education spending",
-        # Emergency — irreversible, last resort
-        "LcsEmergBegged":     "Begged for food or money",
-        "LcsEmergMigrate":    "Migrated or relocated",
-        "LcsEmergChildMarry": "Child marriage (early marriage)",
-        "LcsEmergChildWork":  "Child labour / school dropout",
+        # Stress — reversible; asset drawdown
+        "Lcs_stress_DomAsset":  "Sold household assets/goods (radio, furniture, jewellery)",
+        "Lcs_stress_EatOut":    "Sent household members to eat elsewhere",
+        "Lcs_stress_BorrowCash":"Borrowed money to cover food needs",
+        "Lcs_stress_Saving":    "Spent savings to cover food needs",
+        # Crisis — harder to reverse; productive asset loss
+        "Lcs_crisis_ProdAssets":"Sold productive assets or means of transport",
+        "Lcs_crisis_OutSchool": "Withdrew children from school (compulsory education)",
+        "Lcs_crisis_Health":    "Reduced expenses on health (including essential medicines)",
+        # Emergency — largely irreversible; last resort (3 standard strategies)
+        "Lcs_em_Begged":        "Begged and/or scavenged for food or money",
+        "Lcs_em_Migration":     "Household member migrated informally/irregularly",
+        "Lcs_em_ChildWork":     "Children (under 15) worked to contribute to household income",
     }
     # Tier assignment per column
     _LCS_TIER = {}
-    for _c in ["LcsStressMore", "LcsStressLessExp", "LcsStressBorrow", "LcsStressSavings"]:
+    for _c in ["Lcs_stress_DomAsset", "Lcs_stress_EatOut", "Lcs_stress_BorrowCash", "Lcs_stress_Saving"]:
         _LCS_TIER[_c] = "Stress"
-    for _c in ["LcsCrisisLiquid", "LcsCrisisProd", "LcsCrisisHealth"]:
+    for _c in ["Lcs_crisis_ProdAssets", "Lcs_crisis_OutSchool", "Lcs_crisis_Health"]:
         _LCS_TIER[_c] = "Crisis"
-    for _c in ["LcsEmergBegged", "LcsEmergMigrate", "LcsEmergChildMarry", "LcsEmergChildWork"]:
+    for _c in ["Lcs_em_Begged", "Lcs_em_Migration", "Lcs_em_ChildWork"]:
         _LCS_TIER[_c] = "Emergency"
 
-    # Response-code → display label (N/A first, then least → most serious)
+    # Response-code → display label
+    # WFP standard (WFP-0000134094): 10=No/Not needed, 20=No/Already exhausted, 30=Yes/Applied
     _LCS_CODES = [
         (9999, "Not applicable (N/A)"),
-        (20,   "Not needed"),
-        (10,   "Applied"),
-        (30,   "Exhausted / no longer an option"),
+        (10,   "No — did not need to"),
+        (20,   "No — already exhausted in past 12M"),
+        (30,   "Yes — Applied"),
     ]
-    # PPT-matched response colors
+    # Response colors: lightest = best state → darkest = most severe
     _LCS_COLORS = {
-        9999: "#BFBFBF",   # N/A        — neutral gray
-        20:   "#ECE1B1",   # Not needed — WFP cream
-        10:   "#E67536",   # Applied    — WFP orange
-        30:   "#D70000",   # Exhausted  — WFP red
+        9999: "#BFBFBF",   # N/A                     — neutral gray
+        10:   "#ECE1B1",   # Did not need to          — WFP cream/light (best)
+        30:   "#E67536",   # Applied (Yes)            — WFP orange (concerning)
+        20:   "#D70000",   # Exhausted/depleted       — WFP red (most severe: option gone)
     }
     # Tier visual styling
     _TIER_COLOR = {"Stress": "#0070BA", "Crisis": "#E67536", "Emergency": "#D70000"}
@@ -1427,6 +1441,9 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
         "Crisis":    "rgba(230,117,54,0.07)",
         "Emergency": "rgba(215,0,0,0.07)",
     }
+    # Strategies for which N/A is NOT a valid response per WFP guidance (p.21, p.38):
+    # begging, migration, and child labour should always be "Yes" or "Not needed" only.
+    _LCS_INVALID_NA = {"Lcs_em_Begged", "Lcs_em_Migration", "Lcs_em_ChildWork"}
 
     lcs_cols_present = [c for c in _LCS_LABELS if c in working_df.columns]
 
@@ -1458,7 +1475,9 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
             st.caption(
                 "% of households per response option. Strategies are grouped by severity tier "
                 "(Stress → Crisis → Emergency). "
-                "Gray (N/A) — high rates may indicate interviewer skipping."
+                "Gray (N/A) — high rates may indicate interviewer skipping. "
+                "For emergency strategies, N/A is not a valid response per WFP guidance (p.21) "
+                "— answers should always be 'Yes — Applied' or 'No — did not need to'."
             )
 
             bar_height = max(340, len(lcs_cols_present) * 44 + 120)
@@ -1525,15 +1544,15 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                 ))
 
             layout = _chart_layout(height=bar_height, barmode="stack",
-                                   margin=dict(l=300, r=80, t=44, b=48))
+                                   margin=dict(l=300, r=80, t=20, b=90))
             layout["xaxis"].update(
                 ticksuffix="%", range=[0, 114],
-                title=dict(text="% of households", standoff=8),
+                title=dict(text="% of households", standoff=10),
             )
             layout["yaxis"].update(autorange="reversed", ticklabelposition="outside")
             layout["legend"] = dict(
-                orientation="h", x=0.5, y=1.06,
-                xanchor="center", yanchor="bottom", font=dict(size=10),
+                orientation="h", x=0.5, y=-0.18,
+                xanchor="center", yanchor="top", font=dict(size=10),
                 tracegroupgap=0,
             )
             layout["shapes"]      = tier_shapes
@@ -1541,68 +1560,52 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
             fig.update_layout(**layout)
             st.plotly_chart(fig, use_container_width=True, config=_PLOTLY_CFG)
 
-            # ── Chart B+C: N/A rate by area and enumerator (side by side) ─────
+            # ── Chart B: N/A rate heatmap — strategy × enumerator ───────────
             st.divider()
-            _section("N/A Rate by Area and Enumerator")
+            _section("N/A Rate by Strategy and Enumerator")
             st.caption(
-                "Average % of N/A responses across all LCS strategies per group. "
-                "High rates suggest systematic skipping — flag for supervisor follow-up."
+                "% of surveys where each strategy was marked N/A, by enumerator. "
+                "Red cells = high N/A rate. "
+                "For emergency strategies, any N/A is not valid per WFP guidance "
+                "— any non-zero cell for those rows warrants supervisor follow-up."
             )
 
-            # Compute per-row % N/A across all present LCS columns
-            lcs_numeric = working_df[lcs_cols_present].apply(pd.to_numeric, errors="coerce")
-            working_df2 = working_df.copy()
-            working_df2["_lcs_na_pct"] = (lcs_numeric == 9999).mean(axis=1) * 100
+            if enu_col and enu_col in working_df.columns:
+                hm_records = []
+                _hm_tmp = working_df[[enu_col] + lcs_cols_present].copy()
+                for col in lcs_cols_present:
+                    _hm_tmp[col] = pd.to_numeric(_hm_tmp[col], errors="coerce")
+                strat_label_map = {col: _LCS_LABELS[col] for col in lcs_cols_present}
+                for enu_val, grp in _hm_tmp.groupby(enu_col):
+                    for col in lcs_cols_present:
+                        na_rate = round(float((grp[col] == 9999).mean()) * 100, 1)
+                        hm_records.append({
+                            "Strategy":   strat_label_map[col],
+                            "Enumerator": str(enu_val),
+                            "na_pct":     na_rate,
+                        })
+                hm_df  = pd.DataFrame(hm_records)
+                pivot  = (hm_df.pivot(index="Strategy", columns="Enumerator", values="na_pct")
+                          .fillna(0).round(1))
+                # Preserve strategy display order matching Chart A (top = first strategy)
+                ordered_labels = [_LCS_LABELS[c] for c in lcs_cols_present]
+                pivot = pivot.reindex([lbl for lbl in ordered_labels if lbl in pivot.index])
 
-            col_na_area, col_na_enu = st.columns(2)
-
-            with col_na_area:
-                _section("By Area")
-                if area_col and area_col in working_df2.columns:
-                    na_area = (working_df2.groupby(area_col)["_lcs_na_pct"]
-                               .mean().round(1).sort_values(ascending=True)
-                               .reset_index())
-                    na_area.columns = ["area", "na_pct"]
-                    fig_a = go.Figure(go.Bar(
-                        y=na_area["area"], x=na_area["na_pct"],
-                        orientation="h",
-                        marker_color="#BFBFBF",
-                        marker_line=dict(color="#888", width=0.5),
-                        text=na_area["na_pct"].map(lambda v: f"{v:.1f}%"),
-                        textposition="outside",
-                        hovertemplate="<b>%{y}</b><br>Avg N/A: %{x:.1f}%<extra></extra>",
-                    ))
-                    la = _chart_layout(height=max(220, len(na_area) * 28 + 60),
-                                       margin=dict(l=8, r=50, t=8, b=28))
-                    la["xaxis"].update(ticksuffix="%", range=[0, 105])
-                    fig_a.update_layout(**la)
-                    st.plotly_chart(fig_a, use_container_width=True, config=_PLOTLY_CFG)
-                else:
-                    st.caption("No area column detected.")
-
-            with col_na_enu:
-                _section("By Enumerator")
-                if enu_col and enu_col in working_df2.columns:
-                    na_enu = (working_df2.groupby(enu_col)["_lcs_na_pct"]
-                              .mean().round(1).sort_values(ascending=True)
-                              .reset_index())
-                    na_enu.columns = ["enu", "na_pct"]
-                    fig_e = go.Figure(go.Bar(
-                        y=na_enu["enu"], x=na_enu["na_pct"],
-                        orientation="h",
-                        marker_color="#BFBFBF",
-                        marker_line=dict(color="#888", width=0.5),
-                        text=na_enu["na_pct"].map(lambda v: f"{v:.1f}%"),
-                        textposition="outside",
-                        hovertemplate="<b>%{y}</b><br>Avg N/A: %{x:.1f}%<extra></extra>",
-                    ))
-                    le = _chart_layout(height=max(220, len(na_enu) * 28 + 60),
-                                       margin=dict(l=8, r=50, t=8, b=28))
-                    le["xaxis"].update(ticksuffix="%", range=[0, 105])
-                    fig_e.update_layout(**le)
-                    st.plotly_chart(fig_e, use_container_width=True, config=_PLOTLY_CFG)
-                else:
-                    st.caption("No enumerator column detected.")
+                fig_hm = px.imshow(
+                    pivot,
+                    color_continuous_scale=[[0, "#f5f5f5"], [0.3, "#BFBFBF"], [1.0, "#D70000"]],
+                    zmin=0, zmax=100, aspect="auto",
+                    labels={"x": "Enumerator", "y": "Strategy", "color": "% N/A"},
+                    text_auto=".0f",
+                )
+                fig_hm.update_traces(textfont_size=9)
+                hm_height = max(320, len(pivot) * 36 + 80)
+                hm_layout = _chart_layout(height=hm_height,
+                                          margin=dict(l=300, r=40, t=40, b=80))
+                fig_hm.update_layout(**hm_layout)
+                st.plotly_chart(fig_hm, use_container_width=True, config=_PLOTLY_CFG)
+            else:
+                st.caption("No enumerator column detected — upload data with an enumerator column to see this chart.")
 
 
 # ── Tab 4: Data Quality ───────────────────────────────────────────────────────

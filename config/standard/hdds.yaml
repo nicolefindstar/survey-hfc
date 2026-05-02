@@ -1,29 +1,31 @@
-# HDDS — Household Dietary Diversity Score (10 food groups, binary)
-# Values: 1 = consumed, 0 = not consumed
+# HDDS — Household Dietary Diversity Score (12 food groups, binary 24-hour recall)
+# Source: WFP standard HDDS questionnaire (WFP-0000136453)
+# Values: 1 = consumed in the past 24 hours, 0 = not consumed
+# Scored groups: 10 (HDDSCond is recorded but NOT counted toward the score)
 columns:
-  HDDSStapCer:  { type: float, min: 0, max: 1, required: true }   # Cereals/roots/tubers
-  HDDSStapRoot: { type: float, min: 0, max: 1, required: false }  # Optional separate root column
-  HDDSVeg:      { type: float, min: 0, max: 1, required: true }
-  HDDSFruit:    { type: float, min: 0, max: 1, required: true }
-  HDDSPrMeat:   { type: float, min: 0, max: 1, required: true }
-  HDDSPrEgg:    { type: float, min: 0, max: 1, required: true }
-  HDDSPrFish:   { type: float, min: 0, max: 1, required: true }
-  HDDSPulse:    { type: float, min: 0, max: 1, required: true }
-  HDDSDairy:    { type: float, min: 0, max: 1, required: true }
-  HDDSFat:      { type: float, min: 0, max: 1, required: true }
-  HDDSSugar:    { type: float, min: 0, max: 1, required: true }
-  HDDSCond:     { type: float, min: 0, max: 1, required: false }  # Condiments (not scored)
+  HDDSStapCer:  { type: float, min: 0, max: 1, required: true }   # Cereals, grains (rice, bread, sorghum, millet, maize)
+  HDDSStapRoot: { type: float, min: 0, max: 1, required: false }  # Roots and tubers (potato, cassava, yam, sweet potato)
+  HDDSPulse:    { type: float, min: 0, max: 1, required: true }   # Pulses/legumes, nuts and seeds
+  HDDSDairy:    { type: float, min: 0, max: 1, required: true }   # Dairy (milk, yogurt, cheese)
+  HDDSPrMeat:   { type: float, min: 0, max: 1, required: true }   # Meat, poultry and offal
+  HDDSPrFish:   { type: float, min: 0, max: 1, required: true }   # Fish and shellfish
+  HDDSPrEggs:   { type: float, min: 0, max: 1, required: true }   # Eggs (any type)
+  HDDSVeg:      { type: float, min: 0, max: 1, required: true }   # Vegetables and leaves
+  HDDSFruit:    { type: float, min: 0, max: 1, required: true }   # Fruits
+  HDDSFat:      { type: float, min: 0, max: 1, required: true }   # Oils, fats and butter
+  HDDSSugar:    { type: float, min: 0, max: 1, required: true }   # Sugar and sweets
+  HDDSCond:     { type: float, min: 0, max: 1, required: false }  # Condiments and spices (recorded, not scored)
 
-# Columns counted toward the 10-group score (excludes HDDSCond and duplicates)
+# Columns counted toward the HDDS score (10 groups; excludes HDDSCond and HDDSStapRoot when merged with HDDSStapCer)
 scored_columns:
   - HDDSStapCer
-  - HDDSVeg
-  - HDDSFruit
-  - HDDSPrMeat
-  - HDDSPrEgg
-  - HDDSPrFish
   - HDDSPulse
   - HDDSDairy
+  - HDDSPrMeat
+  - HDDSPrFish
+  - HDDSPrEggs
+  - HDDSVeg
+  - HDDSFruit
   - HDDSFat
   - HDDSSugar
 

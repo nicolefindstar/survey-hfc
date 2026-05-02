@@ -1,7 +1,21 @@
 """
-LCS — Livelihood Coping Strategies
+LCS — Livelihood Coping Strategies — Food Security (LCS-FS)
 
-Encoding: 10=Applied, 20=Not needed, 30=Exhausted, 9999=Not applicable
+Source: WFP standard LCS-FS questionnaire (WFP-0000134094)
+
+Column naming (WFP-0000134094 codebook):
+  Stress    : Lcs_stress_DomAsset, Lcs_stress_EatOut, Lcs_stress_BorrowCash, Lcs_stress_Saving
+  Crisis    : Lcs_crisis_ProdAssets, Lcs_crisis_OutSchool, Lcs_crisis_Health
+  Emergency : Lcs_em_Begged, Lcs_em_Migration, Lcs_em_ChildWork
+
+Encoding per WFP standard (WFP-0000134094, choice list "LcsCl"):
+  10   = No, because we did not need to
+  20   = No, because we already sold those assets / engaged in this activity within the last 12 months
+  30   = Yes (applied this strategy)
+  9999 = Not applicable (no access to this strategy)
+
+Note: code 20 is MORE severe than 30 — the household has permanently exhausted that option.
+For emergency strategies, N/A (9999) is not a valid response per WFP guidance (p.21).
 
 Checks:
   Sequential : Missing values, Erroneous values (invalid choice codes)
@@ -17,10 +31,10 @@ import pandas as pd
 from .base import BaseIndicator
 
 
-_APPLIED = 10
-_NOT_NEEDED = 20
-_EXHAUSTED = 30
-_NA = 9999
+_APPLIED     = 30   # "Yes" — household is actively using this strategy
+_NOT_NEEDED  = 10   # "No, because we did not need to"
+_EXHAUSTED   = 20   # "No, because we already used/sold this option within the past 12 months"
+_NA          = 9999 # Not applicable — household has no access to this strategy
 
 
 class LCSIndicator(BaseIndicator):
