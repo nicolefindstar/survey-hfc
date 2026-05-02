@@ -324,6 +324,30 @@ def compute_stats(results: dict[str, pd.DataFrame], working_df: pd.DataFrame) ->
             "High (≥7)":   int((hdds_s >= 7).sum()),
         }
 
+    # LCS — highest coping tier reached per household
+    # Codes 20 (exhausted) or 30 (applied) both count as "used this strategy"
+    _LCS_USED = {20, 30}
+    _stress_cols = [c for c in working_df.columns if c.startswith("Lcs_stress_")]
+    _crisis_cols = [c for c in working_df.columns if c.startswith("Lcs_crisis_")]
+    _emerg_cols  = [c for c in working_df.columns if c.startswith("Lcs_em_")]
+    lcs_tier_dist = {}
+    if _stress_cols or _crisis_cols or _emerg_cols:
+        def _any_used(df, cols):
+            if not cols:
+                return pd.Series(False, index=df.index)
+            return df[cols].apply(pd.to_numeric, errors="coerce").isin(_LCS_USED).any(axis=1)
+
+        stress_used = _any_used(working_df, _stress_cols)
+        crisis_used = _any_used(working_df, _crisis_cols)
+        emerg_used  = _any_used(working_df, _emerg_cols)
+
+        lcs_tier_dist = {
+            "No coping":  int((~stress_used & ~crisis_used & ~emerg_used).sum()),
+            "Stress":     int((stress_used  & ~crisis_used & ~emerg_used).sum()),
+            "Crisis":     int((crisis_used  & ~emerg_used).sum()),
+            "Emergency":  int(emerg_used.sum()),
+        }
+
     # Per-enumerator flag summary
     enu_rows = []
     if enu_col:
@@ -376,6 +400,7 @@ def compute_stats(results: dict[str, pd.DataFrame], working_df: pd.DataFrame) ->
         "fcs_dist": fcs_dist, "fcs_mean": fcs_mean,
         "rcsi_dist": rcsi_dist, "rcsi_mean": rcsi_mean,
         "hdds_dist": hdds_dist, "hdds_mean": hdds_mean,
+        "lcs_tier_dist": lcs_tier_dist,
         "timeline": timeline, "dur_mean": dur_mean, "dur_med": dur_med,
         "total_flagged": len(all_flagged_ids),
         "generated": datetime.now().strftime("%d %b %Y, %H:%M"),
@@ -725,6 +750,24 @@ def _hdds_section(stats: dict) -> str:
     return _dist_bar(segments, mean_label=str(mean) if mean else None)
 
 
+def _lcs_section(stats: dict) -> str:
+    """
+    Highest coping tier reached per household (mutually exclusive, WFP standard):
+      No coping → Stress → Crisis → Emergency
+    Bars go light → dark as severity increases.
+    """
+    d = stats.get("lcs_tier_dist", {})
+    if not d:
+        return "<p style='color:#888'>LCS data not available.</p>"
+    segments = [
+        ("No coping", d.get("No coping", 0), "#6aab90"),  # green — not using coping
+        ("Stress",    d.get("Stress",    0), "#ccb460"),  # amber  — reversible
+        ("Crisis",    d.get("Crisis",    0), "#cc9470"),  # orange — hard to reverse
+        ("Emergency", d.get("Emergency", 0), "#cc8080"),  # red    — last resort
+    ]
+    return _dist_bar(segments)
+
+
 def _top_issues(flag_rows: list, n_total: int) -> str:
     """
     Render enriched issue cards — sorted by count (most frequent first).
@@ -1049,6 +1092,14 @@ def generate_html(results: dict[str, pd.DataFrame], working_df: pd.DataFrame,
     Thresholds: Low ≤3 food groups · Medium 4–6 · High ≥7 &nbsp;|&nbsp; Higher scores indicate greater dietary diversity.
   </p>
   {_hdds_section(stats)}
+
+  <h3 style="margin-top:20px;">Livelihood Coping Strategies (LCS) — Highest Tier Reached</h3>
+  <p style="font-size:11px;color:#94a3b8;margin-bottom:6px;">
+    Each household is classified by the most severe coping tier they reached (mutually exclusive).
+    Stress = reversible asset drawdown &nbsp;·&nbsp; Crisis = productive asset loss &nbsp;·&nbsp;
+    Emergency = last-resort strategies (begging, migration, child labour).
+  </p>
+  {_lcs_section(stats)}
 
   <!-- ── Section 6: Enumerator Performance ────────────────────────────── -->
   <h2>6. Enumerator Performance</h2>
