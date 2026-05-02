@@ -1501,21 +1501,21 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     line=dict(color=_TIER_COLOR[tier], width=0.6),
                     layer="below",
                 ))
-                # Tier label: xref="paper" x<0 places it in the left margin
+                # Tier label: placed right of the 100% bar using data coords
                 mid_lbl = t_labels[len(t_labels) // 2]
                 tier_annotations.append(dict(
-                    xref="paper", yref="y",
-                    x=-0.01, y=mid_lbl,
+                    xref="x", yref="y",
+                    x=101, y=mid_lbl,
                     text=f"<b>{tier}</b>",
                     showarrow=False,
-                    xanchor="right", yanchor="middle",
+                    xanchor="left", yanchor="middle",
                     font=dict(size=10, color=_TIER_COLOR[tier]),
                 ))
 
             layout = _chart_layout(height=bar_height, barmode="stack",
-                                   margin=dict(l=248, r=8, t=8, b=72))
+                                   margin=dict(l=248, r=70, t=8, b=72))
             layout["xaxis"].update(
-                ticksuffix="%", range=[0, 100],
+                ticksuffix="%", range=[0, 114],
                 title=dict(text="% of households", standoff=36),
             )
             layout["yaxis"].update(autorange="reversed")
