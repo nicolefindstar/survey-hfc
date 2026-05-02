@@ -1374,6 +1374,167 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     use_container_width=True, config=_PLOTLY_CFG,
                 )
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # D — LCS
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # Standard WFP LCS columns → human-readable label (VAM codebook / HFC guidance)
+    _LCS_LABELS = {
+        # Stress
+        "LcsStressMore":    "Sold more animals / crops than usual",
+        "LcsStressLessExp": "Reduced non-food expenditure",
+        "LcsStressBorrow":  "Borrowed money, food, or relied on help",
+        "LcsStressSavings": "Spent savings",
+        # Crisis
+        "LcsCrisisLiquid":  "Sold household assets (radio, bicycle…)",
+        "LcsCrisisProd":    "Sold productive assets or transport",
+        "LcsCrisisHealth":  "Reduced health / education spending",
+        # Emergency
+        "LcsEmergBegged":   "Begged for food or money",
+        "LcsEmergMigrate":  "Migrated or relocated",
+        "LcsEmergChildMarry": "Child marriage (early marriage)",
+        "LcsEmergChildWork":  "Child labour / school dropout",
+    }
+    # Response-code → display label (ordered: best → worst)
+    _LCS_CODES = {
+        20:   "Not needed",
+        9999: "Not applicable (N/A)",
+        10:   "Applied",
+        30:   "Exhausted / no longer an option",
+    }
+    # PPT-matched colors for each response (Not needed=cream, N/A=gray, Applied=orange, Exhausted=red)
+    _LCS_COLORS = {
+        20:   "#ECE1B1",   # Not needed   — WFP cream (acceptable)
+        9999: "#BFBFBF",   # N/A          — neutral gray
+        10:   "#E67536",   # Applied      — WFP orange (warning)
+        30:   "#D70000",   # Exhausted    — WFP red (critical)
+    }
+    # Tier label for each column (used to draw separator annotations)
+    _LCS_TIER = {}
+    for _c in ["LcsStressMore", "LcsStressLessExp", "LcsStressBorrow", "LcsStressSavings"]:
+        _LCS_TIER[_c] = "Stress"
+    for _c in ["LcsCrisisLiquid", "LcsCrisisProd", "LcsCrisisHealth"]:
+        _LCS_TIER[_c] = "Crisis"
+    for _c in ["LcsEmergBegged", "LcsEmergMigrate", "LcsEmergChildMarry", "LcsEmergChildWork"]:
+        _LCS_TIER[_c] = "Emergency"
+
+    lcs_cols_present = [c for c in _LCS_LABELS if c in working_df.columns]
+
+    with st.expander("🏠  Livelihood Coping Strategies (LCS)", expanded=True):
+        if not lcs_cols_present:
+            st.caption("No data — LCS columns not detected in this dataset.")
+        else:
+            n_rows = len(working_df)
+
+            # ── Build long-format count table ─────────────────────────────────
+            records = []
+            for col in lcs_cols_present:
+                series = pd.to_numeric(working_df[col], errors="coerce")
+                for code, label in _LCS_CODES.items():
+                    cnt = int((series == code).sum())
+                    records.append({
+                        "col":   col,
+                        "label": _LCS_LABELS[col],
+                        "tier":  _LCS_TIER.get(col, ""),
+                        "code":  code,
+                        "response": label,
+                        "count": cnt,
+                        "pct":   round(cnt / n_rows * 100, 1) if n_rows else 0,
+                    })
+            lcs_long = pd.DataFrame(records)
+
+            # ── Chart A: stacked bar — response distribution per strategy ─────
+            _section("Response Distribution per Strategy")
+            st.caption(
+                "Each bar = one coping strategy.  "
+                "Gray = N/A (not applicable) — high N/A rates may indicate interviewer skipping."
+            )
+
+            bar_height = max(300, len(lcs_cols_present) * 38 + 80)
+            fig = go.Figure()
+            for code, resp_label in _LCS_CODES.items():
+                sub = lcs_long[lcs_long["code"] == code]
+                fig.add_trace(go.Bar(
+                    name=resp_label,
+                    y=sub["label"],
+                    x=sub["count"],
+                    orientation="h",
+                    marker_color=_LCS_COLORS[code],
+                    text=sub["pct"].map(lambda v: f"{v:.0f}%" if v >= 4 else ""),
+                    textposition="inside",
+                    hovertemplate=(
+                        "<b>%{y}</b><br>"
+                        + resp_label
+                        + ": %{x:,} households (%{customdata:.1f}%)<extra></extra>"
+                    ),
+                    customdata=sub["pct"],
+                ))
+
+            # Tier bracket annotations on y-axis
+            tier_order = ["Stress", "Crisis", "Emergency"]
+            tier_positions = {}
+            for tier in tier_order:
+                tier_cols = [_LCS_LABELS[c] for c in lcs_cols_present
+                             if _LCS_TIER.get(c) == tier]
+                if tier_cols:
+                    tier_positions[tier] = tier_cols
+
+            annotations = []
+            tier_colors_map = {"Stress": "#0070BA", "Crisis": "#E67536", "Emergency": "#D70000"}
+            for tier, cols in tier_positions.items():
+                annotations.append(dict(
+                    x=-n_rows * 0.03,
+                    y=cols[len(cols) // 2],
+                    text=f"<b>{tier}</b>",
+                    showarrow=False,
+                    xanchor="right",
+                    font=dict(size=9, color=tier_colors_map.get(tier, "#444")),
+                    xref="x", yref="y",
+                ))
+
+            layout = _chart_layout(height=bar_height, barmode="stack",
+                                   margin=dict(l=220, r=8, t=8, b=52))
+            layout["xaxis"].update(title="Number of households", tickformat=",")
+            layout["yaxis"].update(autorange="reversed")
+            layout["legend"] = dict(
+                orientation="h", x=0.5, y=-0.12,
+                xanchor="center", yanchor="top", font=dict(size=10),
+            )
+            layout["annotations"] = annotations
+            fig.update_layout(**layout)
+            st.plotly_chart(fig, use_container_width=True, config=_PLOTLY_CFG)
+
+            # ── Chart B: N/A rate per strategy (focus chart) ──────────────────
+            st.divider()
+            _section("N/A Rate per Strategy  — focus view")
+            st.caption(
+                "Strategies with high Not-Applicable rates may indicate enumerator skipping. "
+                "A strategy should only be N/A when it is genuinely inapplicable to the household."
+            )
+
+            na_df = (lcs_long[lcs_long["code"] == 9999]
+                     .sort_values("pct", ascending=True)
+                     .reset_index(drop=True))
+
+            fig2 = go.Figure(go.Bar(
+                y=na_df["label"],
+                x=na_df["pct"],
+                orientation="h",
+                marker_color="#BFBFBF",
+                marker_line=dict(color="#888888", width=0.5),
+                text=na_df["pct"].map(lambda v: f"{v:.1f}%"),
+                textposition="outside",
+                hovertemplate="<b>%{y}</b><br>N/A: %{x:.1f}%<extra></extra>",
+            ))
+            layout2 = _chart_layout(
+                height=max(250, len(na_df) * 34 + 60),
+                margin=dict(l=220, r=60, t=8, b=28),
+            )
+            layout2["xaxis"].update(title="% of households", ticksuffix="%", range=[0, 105])
+            layout2["yaxis"].update(autorange="reversed")
+            fig2.update_layout(**layout2)
+            st.plotly_chart(fig2, use_container_width=True, config=_PLOTLY_CFG)
+
 
 # ── Tab 4: Data Quality ───────────────────────────────────────────────────────
 
