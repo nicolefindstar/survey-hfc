@@ -1379,37 +1379,24 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
     # ══════════════════════════════════════════════════════════════════════════
 
     # Standard WFP LCS columns → human-readable label (VAM codebook / HFC guidance)
+    # Ordered Stress → Crisis → Emergency (increasing severity)
     _LCS_LABELS = {
-        # Stress
-        "LcsStressMore":    "Sold more animals / crops than usual",
-        "LcsStressLessExp": "Reduced non-food expenditure",
-        "LcsStressBorrow":  "Borrowed money, food, or relied on help",
-        "LcsStressSavings": "Spent savings",
-        # Crisis
-        "LcsCrisisLiquid":  "Sold household assets (radio, bicycle…)",
-        "LcsCrisisProd":    "Sold productive assets or transport",
-        "LcsCrisisHealth":  "Reduced health / education spending",
-        # Emergency
-        "LcsEmergBegged":   "Begged for food or money",
-        "LcsEmergMigrate":  "Migrated or relocated",
+        # Stress — asset-light, reversible
+        "LcsStressMore":      "Sold more animals / crops than usual",
+        "LcsStressLessExp":   "Reduced non-food expenditure",
+        "LcsStressBorrow":    "Borrowed money, food, or relied on help",
+        "LcsStressSavings":   "Spent savings",
+        # Crisis — asset-depleting, harder to reverse
+        "LcsCrisisLiquid":    "Sold household assets (radio, bicycle…)",
+        "LcsCrisisProd":      "Sold productive assets or transport",
+        "LcsCrisisHealth":    "Reduced health / education spending",
+        # Emergency — irreversible, last resort
+        "LcsEmergBegged":     "Begged for food or money",
+        "LcsEmergMigrate":    "Migrated or relocated",
         "LcsEmergChildMarry": "Child marriage (early marriage)",
         "LcsEmergChildWork":  "Child labour / school dropout",
     }
-    # Response-code → display label (ordered: N/A first, then least → most serious)
-    _LCS_CODES = [
-        (9999, "Not applicable (N/A)"),
-        (20,   "Not needed"),
-        (10,   "Applied"),
-        (30,   "Exhausted / no longer an option"),
-    ]
-    # PPT-matched colors
-    _LCS_COLORS = {
-        9999: "#BFBFBF",   # N/A          — neutral gray
-        20:   "#ECE1B1",   # Not needed   — WFP cream (acceptable)
-        10:   "#E67536",   # Applied      — WFP orange (warning)
-        30:   "#D70000",   # Exhausted    — WFP red (critical)
-    }
-    # Tier label for each column (used to draw separator annotations)
+    # Tier assignment per column
     _LCS_TIER = {}
     for _c in ["LcsStressMore", "LcsStressLessExp", "LcsStressBorrow", "LcsStressSavings"]:
         _LCS_TIER[_c] = "Stress"
@@ -1417,6 +1404,28 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
         _LCS_TIER[_c] = "Crisis"
     for _c in ["LcsEmergBegged", "LcsEmergMigrate", "LcsEmergChildMarry", "LcsEmergChildWork"]:
         _LCS_TIER[_c] = "Emergency"
+
+    # Response-code → display label (N/A first, then least → most serious)
+    _LCS_CODES = [
+        (9999, "Not applicable (N/A)"),
+        (20,   "Not needed"),
+        (10,   "Applied"),
+        (30,   "Exhausted / no longer an option"),
+    ]
+    # PPT-matched response colors
+    _LCS_COLORS = {
+        9999: "#BFBFBF",   # N/A        — neutral gray
+        20:   "#ECE1B1",   # Not needed — WFP cream
+        10:   "#E67536",   # Applied    — WFP orange
+        30:   "#D70000",   # Exhausted  — WFP red
+    }
+    # Tier visual styling
+    _TIER_COLOR = {"Stress": "#0070BA", "Crisis": "#E67536", "Emergency": "#D70000"}
+    _TIER_BG    = {
+        "Stress":    "rgba(0,112,186,0.07)",
+        "Crisis":    "rgba(230,117,54,0.07)",
+        "Emergency": "rgba(215,0,0,0.07)",
+    }
 
     lcs_cols_present = [c for c in _LCS_LABELS if c in working_df.columns]
 
@@ -1426,7 +1435,7 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
         else:
             n_rows = len(working_df)
 
-            # ── Build long-format count table ─────────────────────────────────
+            # ── Build long-format percentage table ────────────────────────────
             records = []
             for col in lcs_cols_present:
                 series = pd.to_numeric(working_df[col], errors="coerce")
@@ -1443,24 +1452,24 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     })
             lcs_long = pd.DataFrame(records)
 
-            # ── Chart A: stacked bar — response distribution per strategy ─────
+            # ── Chart A: 100% stacked bar — response share per strategy ───────
             _section("Response Distribution per Strategy")
             st.caption(
-                "Ordered: N/A · Not needed · Applied · Exhausted.  "
+                "% of households per response option. Strategies are grouped by severity tier "
+                "(Stress → Crisis → Emergency). "
                 "Gray (N/A) — high rates may indicate interviewer skipping."
             )
 
-            bar_height = max(320, len(lcs_cols_present) * 40 + 100)
+            bar_height = max(340, len(lcs_cols_present) * 44 + 120)
             fig = go.Figure()
             for code, resp_label in _LCS_CODES:
                 sub = lcs_long[lcs_long["code"] == code].copy()
-                # preserve strategy order (tier order, then column order within tier)
                 sub["_order"] = sub["col"].map({c: i for i, c in enumerate(lcs_cols_present)})
                 sub = sub.sort_values("_order")
                 fig.add_trace(go.Bar(
                     name=resp_label,
                     y=sub["label"],
-                    x=sub["count"],
+                    x=sub["pct"],
                     orientation="h",
                     marker_color=_LCS_COLORS[code],
                     text=sub["pct"].map(lambda v: f"{v:.0f}%" if v >= 5 else ""),
@@ -1468,39 +1477,55 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     hovertemplate=(
                         "<b>%{y}</b><br>"
                         + resp_label
-                        + ": %{x:,} households (%{customdata:.1f}%)<extra></extra>"
+                        + ": %{x:.1f}% (%{customdata:,} hh)<extra></extra>"
                     ),
-                    customdata=sub["pct"],
+                    customdata=sub["count"],
                 ))
 
-            # Tier bracket annotations
-            tier_colors_map = {"Stress": "#0070BA", "Crisis": "#E67536", "Emergency": "#D70000"}
-            annotations = []
+            # Tier grouping: colored background bands + left-margin labels
+            # Background bands use yref="y" with category-name strings
+            tier_shapes      = []
+            tier_annotations = []
             for tier in ["Stress", "Crisis", "Emergency"]:
-                tier_labels = [_LCS_LABELS[c] for c in lcs_cols_present
-                               if _LCS_TIER.get(c) == tier]
-                if tier_labels:
-                    annotations.append(dict(
-                        x=-n_rows * 0.03,
-                        y=tier_labels[len(tier_labels) // 2],
-                        text=f"<b>{tier}</b>",
-                        showarrow=False, xanchor="right",
-                        font=dict(size=9, color=tier_colors_map.get(tier, "#444")),
-                        xref="x", yref="y",
-                    ))
+                tier_cols_here = [c for c in lcs_cols_present if _LCS_TIER.get(c) == tier]
+                if not tier_cols_here:
+                    continue
+                t_labels = [_LCS_LABELS[c] for c in tier_cols_here]
+
+                # Shaded band spanning the tier's categories
+                tier_shapes.append(dict(
+                    type="rect", xref="paper", yref="y",
+                    x0=0, x1=1,
+                    y0=t_labels[0], y1=t_labels[-1],
+                    fillcolor=_TIER_BG[tier],
+                    line=dict(color=_TIER_COLOR[tier], width=0.6),
+                    layer="below",
+                ))
+                # Tier label: xref="paper" x<0 places it in the left margin
+                mid_lbl = t_labels[len(t_labels) // 2]
+                tier_annotations.append(dict(
+                    xref="paper", yref="y",
+                    x=-0.01, y=mid_lbl,
+                    text=f"<b>{tier}</b>",
+                    showarrow=False,
+                    xanchor="right", yanchor="middle",
+                    font=dict(size=10, color=_TIER_COLOR[tier]),
+                ))
 
             layout = _chart_layout(height=bar_height, barmode="stack",
-                                   margin=dict(l=220, r=8, t=8, b=70))
-            layout["xaxis"].update(tickformat=",",
-                                   title=dict(text="Number of households",
-                                              standoff=40))   # push title below legend
+                                   margin=dict(l=248, r=8, t=8, b=72))
+            layout["xaxis"].update(
+                ticksuffix="%", range=[0, 100],
+                title=dict(text="% of households", standoff=36),
+            )
             layout["yaxis"].update(autorange="reversed")
             layout["legend"] = dict(
-                orientation="h", x=0.5, y=-0.10,
+                orientation="h", x=0.5, y=-0.09,
                 xanchor="center", yanchor="top", font=dict(size=10),
                 tracegroupgap=0,
             )
-            layout["annotations"] = annotations
+            layout["shapes"]      = tier_shapes
+            layout["annotations"] = tier_annotations
             fig.update_layout(**layout)
             st.plotly_chart(fig, use_container_width=True, config=_PLOTLY_CFG)
 
@@ -1513,9 +1538,7 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
             )
 
             # Compute per-row % N/A across all present LCS columns
-            lcs_numeric = working_df[lcs_cols_present].apply(
-                pd.to_numeric, errors="coerce"
-            )
+            lcs_numeric = working_df[lcs_cols_present].apply(pd.to_numeric, errors="coerce")
             working_df2 = working_df.copy()
             working_df2["_lcs_na_pct"] = (lcs_numeric == 9999).mean(axis=1) * 100
 
@@ -1548,8 +1571,7 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
             with col_na_enu:
                 _section("By Enumerator  (top 20)")
                 if enu_col and enu_col in working_df2.columns:
-                    top_enus = (working_df2[enu_col].value_counts()
-                                .head(20).index)
+                    top_enus = (working_df2[enu_col].value_counts().head(20).index)
                     na_enu = (working_df2[working_df2[enu_col].isin(top_enus)]
                               .groupby(enu_col)["_lcs_na_pct"]
                               .mean().round(1).sort_values(ascending=True)
