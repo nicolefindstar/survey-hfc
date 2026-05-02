@@ -300,9 +300,29 @@ def compute_stats(results: dict[str, pd.DataFrame], working_df: pd.DataFrame) ->
     fcs_mean = (round(float(pd.to_numeric(working_df["FCS"], errors="coerce").mean()), 1)
                 if "FCS" in working_df.columns else None)
 
-    # rCSI mean
-    rcsi_mean = (round(float(pd.to_numeric(working_df["rCSI"], errors="coerce").mean()), 1)
-                 if "rCSI" in working_df.columns else None)
+    # rCSI distribution (Low ≤3 / Medium 4–18 / High ≥19)
+    rcsi_dist = {}
+    rcsi_mean = None
+    if "rCSI" in working_df.columns:
+        rcsi_s = pd.to_numeric(working_df["rCSI"], errors="coerce").dropna()
+        rcsi_mean = round(float(rcsi_s.mean()), 1) if not rcsi_s.empty else None
+        rcsi_dist = {
+            "Low (≤3)":    int((rcsi_s <= 3).sum()),
+            "Medium (4–18)": int(((rcsi_s >= 4) & (rcsi_s <= 18)).sum()),
+            "High (≥19)":  int((rcsi_s >= 19).sum()),
+        }
+
+    # HDDS distribution (Low ≤3 / Medium 4–6 / High ≥7)
+    hdds_dist = {}
+    hdds_mean = None
+    if "HDDS" in working_df.columns:
+        hdds_s = pd.to_numeric(working_df["HDDS"], errors="coerce").dropna()
+        hdds_mean = round(float(hdds_s.mean()), 1) if not hdds_s.empty else None
+        hdds_dist = {
+            "Low (≤3)":    int((hdds_s <= 3).sum()),
+            "Medium (4–6)": int(((hdds_s >= 4) & (hdds_s <= 6)).sum()),
+            "High (≥7)":   int((hdds_s >= 7).sum()),
+        }
 
     # Per-enumerator flag summary
     enu_rows = []
@@ -353,7 +373,9 @@ def compute_stats(results: dict[str, pd.DataFrame], working_df: pd.DataFrame) ->
         "n": n, "date_range": date_range, "days_active": days_active,
         "n_enumerators": n_enumerators, "n_admin": n_admin,
         "flag_rows": flag_rows, "enu_rows": enu_rows, "admin_rows": admin_rows,
-        "fcs_dist": fcs_dist, "fcs_mean": fcs_mean, "rcsi_mean": rcsi_mean,
+        "fcs_dist": fcs_dist, "fcs_mean": fcs_mean,
+        "rcsi_dist": rcsi_dist, "rcsi_mean": rcsi_mean,
+        "hdds_dist": hdds_dist, "hdds_mean": hdds_mean,
         "timeline": timeline, "dur_mean": dur_mean, "dur_med": dur_med,
         "total_flagged": len(all_flagged_ids),
         "generated": datetime.now().strftime("%d %b %Y, %H:%M"),
@@ -576,26 +598,34 @@ def _indicator_table(flag_rows: list) -> str:
 def _enumerator_table(enu_rows: list) -> str:
     if not enu_rows:
         return "<p style='color:#888'>Enumerator column not found in dataset.</p>"
+    total_surveys = sum(r["surveys"] for r in enu_rows) or 1
     rows_html = ""
     for r in enu_rows:
-        rate = r["rate"]
-        bg   = _rate_bg(rate)
-        col  = _rate_color(rate)
-        bar  = _css_bar(rate, col)
+        rate        = r["rate"]
+        bg          = _rate_bg(rate)
+        col         = _rate_color(rate)
+        flag_bar    = _css_bar(rate, col, width=120)
+        share_pct   = round(r["surveys"] / total_surveys * 100, 1)
+        share_bar   = _css_bar(share_pct, "#6a9cc8", width=100)
         rows_html += (
             f"<tr>"
             f"<td>{html.escape(r['enumerator'])}</td>"
-            f"<td style='text-align:right'>{r['surveys']:,}</td>"
+            f"<td>"
+            f"  {share_bar}&nbsp;"
+            f"  <span style='font-size:11px;color:#64748b'>{r['surveys']:,}"
+            f"  <span style='color:#94a3b8;font-size:10px'>({share_pct:.1f}%)</span></span>"
+            f"</td>"
             f"<td style='text-align:right'>{r['flagged']:,}</td>"
             f"<td style='background:{bg}'>"
-            f"  {bar}&nbsp;"
+            f"  {flag_bar}&nbsp;"
             f"  <span class='badge' style='background:{bg};color:{col}'>{rate:.1f}%</span>"
             f"</td>"
             f"</tr>"
         )
     return (
         "<table>"
-        "<thead><tr><th>Enumerator</th><th>Surveys</th><th>Flagged</th><th>Flag Rate</th></tr></thead>"
+        "<thead><tr><th>Enumerator</th><th>Surveys Collected</th>"
+        "<th>Flagged</th><th>Flag Rate</th></tr></thead>"
         f"<tbody>{rows_html}</tbody></table>"
     )
 
@@ -627,28 +657,72 @@ def _admin_table(admin_rows: list) -> str:
     )
 
 
+def _dist_bar(segments: list[tuple[str, int, str]], mean_label: str | None = None) -> str:
+    """
+    Render a horizontal stacked distribution bar.
+    segments: list of (label, count, hex_color)
+    """
+    total = sum(c for _, c, _ in segments) or 1
+    bar_parts, badge_parts = [], []
+    for label, count, color in segments:
+        pct = round(count / total * 100, 1)
+        bar_parts.append(
+            f'<div class="fcg-seg" style="flex:{max(pct, 0.5)};background:{color}">'
+            f'{"" if pct < 6 else f"{pct:.0f}%"}</div>'
+        )
+        badge_parts.append(
+            f'<span class="badge" style="background:{color}22;color:{color};border:1px solid {color}55;">'
+            f'{label}: {count:,} ({pct:.1f}%)</span>'
+        )
+    mean_str = (
+        f"<p style='margin-top:8px;font-size:12px;color:#475569'>"
+        f"Mean: <b>{mean_label}</b></p>"
+    ) if mean_label else ""
+    return (
+        f'<div class="fcg-bar">{"".join(bar_parts)}</div>'
+        f'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">{"".join(badge_parts)}</div>'
+        + mean_str
+    )
+
+
 def _fcs_section(stats: dict) -> str:
     d    = stats["fcs_dist"]
     mean = stats["fcs_mean"]
     if not d and mean is None:
         return "<p style='color:#888'>FCS data not available.</p>"
-
     total = sum(d.values()) or 1
-    parts = []
-    labels = []
-    for label in ("Poor", "Borderline", "Acceptable"):
-        n   = d.get(label, 0)
-        pct = round(n / total * 100, 1)
-        col = _fcg_color(label)
-        parts.append(f'<div class="fcg-seg" style="flex:{pct};background:{col}">{pct:.0f}%</div>')
-        labels.append(f'<span class="badge" style="background:{_rate_bg(100 if label=="Poor" else 15 if label=="Borderline" else 0)};color:{col}">{label}: {n:,} ({pct:.1f}%)</span>')
+    segments = [
+        ("Poor",       d.get("Poor", 0),       "#cc8080"),
+        ("Borderline", d.get("Borderline", 0),  "#ccb460"),
+        ("Acceptable", d.get("Acceptable", 0),  "#6aab90"),
+    ]
+    return _dist_bar(segments, mean_label=str(mean) if mean else None)
 
-    mean_str = f"<p style='margin-top:10px;font-size:12px'>Mean FCS: <b>{mean}</b></p>" if mean else ""
-    return (
-        f'<div class="fcg-bar">{"".join(parts)}</div>'
-        f'<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">{"".join(labels)}</div>'
-        + mean_str
-    )
+
+def _rcsi_section(stats: dict) -> str:
+    d    = stats.get("rcsi_dist", {})
+    mean = stats.get("rcsi_mean")
+    if not d and mean is None:
+        return "<p style='color:#888'>rCSI data not available.</p>"
+    segments = [
+        ("Low (≤3)",     d.get("Low (≤3)", 0),      "#6aab90"),
+        ("Medium (4–18)", d.get("Medium (4–18)", 0), "#ccb460"),
+        ("High (≥19)",   d.get("High (≥19)", 0),    "#cc8080"),
+    ]
+    return _dist_bar(segments, mean_label=str(mean) if mean else None)
+
+
+def _hdds_section(stats: dict) -> str:
+    d    = stats.get("hdds_dist", {})
+    mean = stats.get("hdds_mean")
+    if not d and mean is None:
+        return "<p style='color:#888'>HDDS data not available.</p>"
+    segments = [
+        ("Low (≤3)",    d.get("Low (≤3)", 0),    "#cc8080"),
+        ("Medium (4–6)", d.get("Medium (4–6)", 0), "#ccb460"),
+        ("High (≥7)",   d.get("High (≥7)", 0),   "#6aab90"),
+    ]
+    return _dist_bar(segments, mean_label=str(mean) if mean else None)
 
 
 def _top_issues(flag_rows: list, n_total: int) -> str:
@@ -958,8 +1032,23 @@ def generate_html(results: dict[str, pd.DataFrame], working_df: pd.DataFrame,
 
   <!-- ── Section 5: Food Security Highlights ───────────────────────────── -->
   <h2>5. Food Security Indicators</h2>
-  <h3>Food Consumption Group Distribution</h3>
+  <h3>Food Consumption Score (FCS) — Food Group Distribution</h3>
+  <p style="font-size:11px;color:#94a3b8;margin-bottom:6px;">
+    Thresholds: Poor &lt;28 · Borderline 28–42 · Acceptable &gt;42
+  </p>
   {_fcs_section(stats)}
+
+  <h3 style="margin-top:20px;">Reduced Coping Strategy Index (rCSI) — Severity Distribution</h3>
+  <p style="font-size:11px;color:#94a3b8;margin-bottom:6px;">
+    Thresholds: Low ≤3 · Medium 4–18 · High ≥19 &nbsp;|&nbsp; Higher scores indicate greater food insecurity coping pressure.
+  </p>
+  {_rcsi_section(stats)}
+
+  <h3 style="margin-top:20px;">Household Dietary Diversity Score (HDDS) — Diversity Distribution</h3>
+  <p style="font-size:11px;color:#94a3b8;margin-bottom:6px;">
+    Thresholds: Low ≤3 food groups · Medium 4–6 · High ≥7 &nbsp;|&nbsp; Higher scores indicate greater dietary diversity.
+  </p>
+  {_hdds_section(stats)}
 
   <!-- ── Section 6: Enumerator Performance ────────────────────────────── -->
   <h2>6. Enumerator Performance</h2>
