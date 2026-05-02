@@ -1211,10 +1211,11 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
         return fig
 
     # ── Helper: mean score horizontal bar ────────────────────────────────────
-    def _mean_hbar(df, group_col, score_col, color, top_n=25):
+    def _mean_hbar(df, group_col, score_col, color):
+        """Show mean score for every group, sorted ascending by mean."""
         tmp = (df[[group_col, score_col]].dropna()
                .groupby(group_col)[score_col].mean().round(2)
-               .sort_values(ascending=True).tail(top_n).reset_index())
+               .sort_values(ascending=True).reset_index())
         tmp.columns = ["group", "mean"]
         fig = go.Figure(go.Bar(
             x=tmp["mean"], y=tmp["group"],
@@ -1255,9 +1256,9 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
 
             with cb:
                 if enu_col and enu_col in working_df.columns:
-                    _section("By Enumerator  (top 20)")
+                    _section("By Enumerator")
                     st.plotly_chart(
-                        _stacked_pct_bar(working_df, enu_col, "FCG", fcs_cats, fcs_colors, top_n=20),
+                        _stacked_pct_bar(working_df, enu_col, "FCG", fcs_cats, fcs_colors),
                         use_container_width=True, config=_PLOTLY_CFG,
                     )
                 else:
@@ -1310,9 +1311,9 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
 
             with cb:
                 if enu_col and enu_col in working_df.columns:
-                    _section("By Enumerator  (top 20)")
+                    _section("By Enumerator")
                     st.plotly_chart(
-                        _stacked_pct_bar(df_r, enu_col, "rCSI_Cat", rcsi_cats, rcsi_colors, top_n=20),
+                        _stacked_pct_bar(df_r, enu_col, "rCSI_Cat", rcsi_cats, rcsi_colors),
                         use_container_width=True, config=_PLOTLY_CFG,
                     )
                 else:
@@ -1356,7 +1357,7 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
             # -- By enumerator --
             with cb:
                 if enu_col and enu_col in working_df.columns:
-                    _section("Mean HDDS by Enumerator  (top 25)")
+                    _section("Mean HDDS by Enumerator")
                     st.plotly_chart(
                         _mean_hbar(working_df, enu_col, "HDDS", _C["teal"]),
                         use_container_width=True, config=_PLOTLY_CFG,
@@ -1569,11 +1570,9 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     st.caption("No area column detected.")
 
             with col_na_enu:
-                _section("By Enumerator  (top 20)")
+                _section("By Enumerator")
                 if enu_col and enu_col in working_df2.columns:
-                    top_enus = (working_df2[enu_col].value_counts().head(20).index)
-                    na_enu = (working_df2[working_df2[enu_col].isin(top_enus)]
-                              .groupby(enu_col)["_lcs_na_pct"]
+                    na_enu = (working_df2.groupby(enu_col)["_lcs_na_pct"]
                               .mean().round(1).sort_values(ascending=True)
                               .reset_index())
                     na_enu.columns = ["enu", "na_pct"]
