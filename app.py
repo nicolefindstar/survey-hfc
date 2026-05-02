@@ -1784,7 +1784,7 @@ def tab_data_quality(stats: dict, working_df: pd.DataFrame, results: dict):
 
     # ── Row 4: FEWS NET illogicality matrix ───────────────────────────────────
     _section("FEWS NET Cross-Indicator Consistency Matrix (HHS × FCG × rCSI)")
-    hhs_cols = [c for c in ["HHBedHunger","HHNoFood","HHNotEat"] if c in working_df.columns]
+    hhs_cols = [c for c in ["HHSBedHung","HHSNoFood","HHSNotEat"] if c in working_df.columns]
     if hhs_cols and "FCG" in working_df.columns and "rCSI" in working_df.columns:
         mx = working_df.copy()
         for hc in hhs_cols:
@@ -1857,7 +1857,7 @@ def tab_data_quality(stats: dict, working_df: pd.DataFrame, results: dict):
             unsafe_allow_html=True,
         )
     else:
-        st.caption("FEWS NET matrix requires HHS columns (HHBedHunger, HHNoFood, HHNotEat), FCG, and rCSI.")
+        st.caption("FEWS NET matrix requires HHS columns (HHSBedHung, HHSNoFood, HHSNotEat), FCG, and rCSI.")
 
     # ── Row 5: Expenditure outliers (bottom 5 / top 5) ───────────────────────
     exp_cols = [c for c in working_df.columns
