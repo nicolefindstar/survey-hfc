@@ -1483,8 +1483,13 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     customdata=sub["count"],
                 ))
 
-            # Tier grouping: colored background bands + left-margin labels
-            # Background bands use yref="y" with category-name strings
+            # Tier grouping: colored background bands + right-side tier labels
+            # Use yref="paper" for shapes so bands cover full row height, not
+            # just center-to-center.  With autorange="reversed" and N categories
+            # (0-indexed from top), the axis range is [-0.5, N-0.5]:
+            #   top edge of category i  → paper_y = 1 - i / N
+            #   bottom edge             → paper_y = 1 - (i+1) / N
+            n_strats        = len(lcs_cols_present)
             tier_shapes      = []
             tier_annotations = []
             for tier in ["Stress", "Crisis", "Emergency"]:
@@ -1493,16 +1498,22 @@ def tab_indicator_breakdown(working_df: pd.DataFrame):
                     continue
                 t_labels = [_LCS_LABELS[c] for c in tier_cols_here]
 
-                # Shaded band spanning the tier's categories
+                i_first = lcs_cols_present.index(tier_cols_here[0])
+                i_last  = lcs_cols_present.index(tier_cols_here[-1])
+                y_top   = 1.0 - i_first / n_strats
+                y_bot   = 1.0 - (i_last + 1) / n_strats
+                mid_y   = (y_top + y_bot) / 2.0
+
+                # Shaded band — paper coords → covers full row height exactly
                 tier_shapes.append(dict(
-                    type="rect", xref="paper", yref="y",
+                    type="rect", xref="paper", yref="paper",
                     x0=0, x1=1,
-                    y0=t_labels[0], y1=t_labels[-1],
+                    y0=y_bot, y1=y_top,
                     fillcolor=_TIER_BG[tier],
                     line=dict(color=_TIER_COLOR[tier], width=0.6),
                     layer="below",
                 ))
-                # Tier label: placed right of the 100% bar using data coords
+                # Tier label right of bars (data x=101, paper y for vertical centering)
                 mid_lbl = t_labels[len(t_labels) // 2]
                 tier_annotations.append(dict(
                     xref="x", yref="y",
